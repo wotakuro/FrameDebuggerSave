@@ -1,0 +1,10 @@
+{
+    "name": "com.utj.framedebugger2csv",
+    "displayName": "FrameDebugger To Csv",
+    "version": "0.1.0",
+    "unity": "2018.4",
+    "description": "FrameDebugger to csv file",
+    "keywords": ["FrameDebugger"],
+    "category": "profiler",
+    "dependencies": {}
+}
