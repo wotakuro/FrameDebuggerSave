@@ -6,6 +6,48 @@ namespace UTJ.FrameDebugSave
 {
     public class FrameInfoCrawler
     {
+        public struct FrameInfo
+        {
+            // inform
+            public int frameEventIndex;
+            public int vertexCount;
+            public int indexCount;
+            public int instanceCount;
+            public int drawCallCount;
+            public string shaderName;
+            public string passName;
+            public string passLightMode;
+            public int shaderInstanceID;
+            public int subShaderIndex;
+            public int shaderPassIndex;
+            public string shaderKeywords;
+            public int componentInstanceID;
+            public int meshInstanceID;
+            public int meshSubset;
+
+            // state for compute shader dispatches
+            public int csInstanceID;
+            public string csName;
+            public string csKernel;
+            public int csThreadGroupsX;
+            public int csThreadGroupsY;
+            public int csThreadGroupsZ;
+
+            // active render target info
+            public string rtName;
+            public int rtWidth;
+            public int rtHeight;
+            public int rtFormat;
+            public int rtDim;
+            public int rtFace;
+            public short rtCount;
+            public short rtHasDepthTexture;
+
+            public int batchBreakCause;
+
+            public string batchBreakCauseStr;
+        }
+
         private IEnumerator enumerator;
         private System.Action endCallback;
 
@@ -29,8 +71,6 @@ namespace UTJ.FrameDebugSave
             var frameDebuggerWindowType = this.reflectionCache.GetTypeObject("UnityEditor.FrameDebuggerWindow");
             var window = frameDebuggerWindowType.CallMethod<object>("ShowFrameDebuggerWindow", null, null);
             this.frameDebuggerWindowObj = new ReflectionClassWithObject(frameDebuggerWindowType, window);
-
-
         }
         public void Setup(System.Action callback)
         {
@@ -89,14 +129,17 @@ namespace UTJ.FrameDebugSave
                     continue;
                 }
 
-                int frameIdx = frameData.GetFieldValue<int>("frameEventIndex");
-                string shaderName = frameData.GetFieldValue<string>("shaderName");
-                string passName = frameData.GetFieldValue<string>("passName");
-                string shaderKeywords = frameData.GetFieldValue<string>("shaderKeywords");
-                int reasonIdx = frameData.GetFieldValue<int>("batchBreakCause"); 
+                FrameInfo frameInfo = new FrameInfo();
+                frameData.CopyFieldsToObjectByVarName<FrameInfo>(ref frameInfo);
+                frameInfo.batchBreakCauseStr = breakReasons[frameInfo.batchBreakCause];
+
 
                 currentProgress = i / (float)count;
-                UnityEngine.Debug.Log(frameIdx +"  " + shaderName + "\n" + passName + "\n" + shaderKeywords + "\n" + breakReasons[reasonIdx]);
+                UnityEngine.Debug.Log(frameInfo.frameEventIndex + "  " +
+                    frameInfo.shaderName + "\n" +
+                    frameInfo.passName + "\n" +
+                    frameInfo.shaderKeywords + "\n" +
+                    frameInfo.batchBreakCauseStr);
             }
             yield return null;
         }

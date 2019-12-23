@@ -38,7 +38,23 @@ namespace UTJ.FrameDebugSave
     }
     public class ReflectionType
     {
-        public System.Type type;
+
+        public class CopyFieldInfo
+        {
+            public FieldInfo sourceField;
+            public FieldInfo destField;
+            public CopyFieldInfo(FieldInfo src, FieldInfo dst)
+            {
+                this.sourceField = src;
+                this.destField = dst;
+            }
+        }
+
+        private System.Type type;
+        private Dictionary<string, FieldInfo> cacheCopyFieldInfo;
+        private Dictionary<System.Type, List<CopyFieldInfo>> copyDestFieldsByType;
+        const BindingFlags copyBindingFlag = BindingFlags.Public | BindingFlags.Instance;
+
         public ReflectionType(System.Type t)
         {
             this.type = t;
@@ -94,6 +110,56 @@ namespace UTJ.FrameDebugSave
             var prop = GetPropertyInfo( p);
             return (T)prop.GetValue(target);
         }
+
+        public System.Type GetRawType()
+        {
+            return this.type;
+        }
+        public List<CopyFieldInfo> GetCopyFieldInfoList(System.Type dstType)
+        {
+            if (copyDestFieldsByType == null)
+            {
+                copyDestFieldsByType = new Dictionary<System.Type, List<CopyFieldInfo>>();
+            }
+            List<CopyFieldInfo> copyInfoList = null;
+            if (copyDestFieldsByType.TryGetValue(dstType, out copyInfoList))
+            {
+                return copyInfoList;
+            }
+            copyInfoList = new List<CopyFieldInfo>();
+            var dstFields = dstType.GetFields(copyBindingFlag);
+            var ownPublicFields = GetPublicInstanceField();
+
+            foreach (var field in dstFields)
+            {
+                FieldInfo sourceField = null;
+
+                if (ownPublicFields.TryGetValue(field.Name, out sourceField))
+                {
+                    var copyInfo = new CopyFieldInfo(sourceField, field);
+                    copyInfoList.Add(copyInfo);
+                }
+            }
+
+            copyDestFieldsByType.Add(dstType, copyInfoList);
+            return copyInfoList;
+        }
+
+        public Dictionary<string, FieldInfo> GetPublicInstanceField()
+        {
+            if (cacheCopyFieldInfo != null)
+            {
+                return cacheCopyFieldInfo;
+            }
+            var originFields = this.type.GetFields(copyBindingFlag);
+            cacheCopyFieldInfo = new Dictionary<string, FieldInfo>(originFields.Length);
+            foreach (var field in originFields)
+            {
+                cacheCopyFieldInfo.Add(field.Name, field);
+            }
+            return cacheCopyFieldInfo;
+        }
+
     }
 
     public class ReflectionClassWithObject
@@ -124,6 +190,19 @@ namespace UTJ.FrameDebugSave
         {
             return this.type.CallMethod<T>(m,this.target,args);
         }
+
+        public void CopyFieldsToObjectByVarName<T>(ref T dest)
+        {
+            var copyInfoList = type.GetCopyFieldInfoList(dest.GetType());
+            object box = dest;
+            foreach ( var info in copyInfoList)
+            {
+                var obj = info.sourceField.GetValue(this.target);
+                info.destField.SetValue(box, obj);
+            }
+            dest = (T)box;
+        }
+
     }
 
 }
