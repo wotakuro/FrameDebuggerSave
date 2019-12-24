@@ -31,16 +31,12 @@ namespace UTJ.FrameDebugSave
 
         private static void EndCrawler()
         {
-
-            var date = System.DateTime.Now;
-            var dateString = string.Format("{0:D4}{1:D2}{2:D2}_{3:D2}{4:D2}{5:D2}_", date.Year, date.Month, date.Day, date.Hour, date.Minute, date.Second);
-            var profilerStr = ProfilerDriver.GetConnectionIdentifier(ProfilerDriver.connectedProfiler);
-            string dirPath = "FrameDebugger/" + dateString + profilerStr;
+            string dirPath =  crawler.saveDirectory;
             // directory
-            Directory.CreateDirectory(dirPath);
 
             CsvStringGenerator csvStringGenerator = new CsvStringGenerator();
             csvStringGenerator.AppendColumn("frameEventIndex");
+            csvStringGenerator.AppendColumn("type");
 
             csvStringGenerator.AppendColumn("rtName").
                 AppendColumn("rtWidth").AppendColumn("rtHeight").
@@ -66,35 +62,40 @@ namespace UTJ.FrameDebugSave
             csvStringGenerator.NextRow();
 
 
-            foreach( var evt in crawler.frameDebuggerEventDataList)
+            for( int i = 0; i< crawler.frameDebuggerEventDataList.Count;++i )
             {
+                var evtData = crawler.frameDebuggerEventDataList[i];
 
-                csvStringGenerator.AppendColumn(evt.frameEventIndex);
+                csvStringGenerator.AppendColumn(evtData.frameEventIndex);
 
-                csvStringGenerator.AppendColumn(evt.rtName).
-                    AppendColumn(evt.rtWidth).AppendColumn(evt.rtHeight).
-                    AppendColumn(evt.rtCount).AppendColumn(evt.rtHasDepthTexture);
+                var evt = crawler.frameDebuggerEventList[i];
+                csvStringGenerator.AppendColumn(evt.type.ToString());
 
-                csvStringGenerator.AppendColumn(evt.vertexCount).
-                    AppendColumn(evt.indexCount).
-                    AppendColumn(evt.instanceCount).
-                    AppendColumn(evt.drawCallCount).
-                    AppendColumn(evt.shaderName).
-                    AppendColumn(evt.passName).
-                    AppendColumn(evt.passLightMode).
-                    AppendColumn(evt.subShaderIndex).
-                    AppendColumn(evt.shaderPassIndex).
-                    AppendColumn(evt.shaderKeywords).
-                    AppendColumn(evt.componentInstanceID).
-                    AppendColumn(evt.meshInstanceID).
-                    AppendColumn(evt.meshSubset);
+                csvStringGenerator.AppendColumn(evtData.rtName).
+                    AppendColumn(evtData.rtWidth).AppendColumn(evtData.rtHeight).
+                    AppendColumn(evtData.rtCount).AppendColumn(evtData.rtHasDepthTexture);
+
+                csvStringGenerator.AppendColumn(evtData.vertexCount).
+                    AppendColumn(evtData.indexCount).
+                    AppendColumn(evtData.instanceCount).
+                    AppendColumn(evtData.drawCallCount).
+                    AppendColumn(evtData.shaderName).
+                    AppendColumn(evtData.passName).
+                    AppendColumn(evtData.passLightMode).
+                    AppendColumn(evtData.subShaderIndex).
+                    AppendColumn(evtData.shaderPassIndex).
+                    AppendColumn(evtData.shaderKeywords).
+                    AppendColumn(evtData.componentInstanceID).
+                    AppendColumn(evtData.meshInstanceID).
+                    AppendColumn(evtData.meshSubset);
 
 
-                csvStringGenerator.AppendColumn(evt.batchBreakCauseStr);
+                csvStringGenerator.AppendColumn(evtData.batchBreakCauseStr);
                 csvStringGenerator.NextRow();
             }
             File.WriteAllText(Path.Combine(dirPath, "events.csv"), csvStringGenerator.ToString());
 
+            EditorUtility.DisplayDialog("Saved", dirPath, "ok");
             crawler = null;
         }
         

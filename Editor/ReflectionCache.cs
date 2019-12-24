@@ -203,6 +203,23 @@ namespace UTJ.FrameDebugSave
             dest = (T)box;
         }
 
+
+        public static List<T> CopyToListFromArray<T>(System.Array arr,ReflectionCache cache)
+        {
+            if( arr == null) { return null; }
+            List<T> list = new List<T>(arr.Length);
+            if(arr.Length <= 0) { return list; }
+
+            foreach (var obj in arr)
+            {
+                T dest = (T)System.Activator.CreateInstance(typeof(T));
+                var reflectionType = cache.GetTypeObject(obj.GetType().FullName);
+                var reflectionClassWithObject = new ReflectionClassWithObject(reflectionType, obj);
+                reflectionClassWithObject.CopyFieldsToObjectByVarName(ref dest);
+                list.Add(dest);
+            }
+            return list;
+        }
     }
 
 }

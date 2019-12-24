@@ -2,11 +2,45 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEditorInternal;
 
 namespace UTJ.FrameDebugSave
 {
     public class FrameInfoCrawler
     {
+        [System.Flags]
+        public enum CrawlerFlag
+        {
+            None = 0,
+            ScreenShotBySteps = 1,// EditorOnly
+            ShaderTexture = 2, //EditorOnly
+        }
+
+        public class ShaderPropertyInfo
+        {
+            public string name;
+            public int flags;
+            public string textureName;
+            public object value;
+        }
+
+
+        public class ShaderProperties
+        {
+            public System.Array floats;
+            public System.Array vectors;
+            public System.Array matrices;
+            public System.Array textures;
+            public System.Array buffers;
+
+            // NonSerialized
+            public List<ShaderPropertyInfo> floatProps;
+            public List<ShaderPropertyInfo> vectorProps;
+            public List<ShaderPropertyInfo> matrixProps;
+            public List<ShaderPropertyInfo> textureProps;
+            public List<ShaderPropertyInfo> bufferProps;
+        }
+
         public class FrameDebuggerEventData
         {
             // inform
@@ -46,6 +80,9 @@ namespace UTJ.FrameDebugSave
 
             public int batchBreakCause;
 
+            public object shaderProperties;
+
+            // non Serialized 
             public string batchBreakCauseStr;
         }
 
@@ -54,6 +91,14 @@ namespace UTJ.FrameDebugSave
             public object type;
             public GameObject gameObject;
         }
+
+
+
+
+        public List<FrameDebuggerEventData> frameDebuggerEventDataList { get; private set; }
+        public List<FrameDebuggerEvent> frameDebuggerEventList { get; private set; }
+
+        public string saveDirectory { get; private set; }
 
         private IEnumerator enumerator;
         private System.Action endCallback;
@@ -69,10 +114,6 @@ namespace UTJ.FrameDebugSave
 
         private string[] breakReasons;
 
-        public List<FrameDebuggerEventData> frameDebuggerEventDataList { get; private set; }
-        public List<FrameDebuggerEvent> frameDebuggerEventList { get; private set; }
-
-
 
         public FrameInfoCrawler()
         {
@@ -86,6 +127,13 @@ namespace UTJ.FrameDebugSave
         }
         public void Setup(System.Action callback)
         {
+            var date = System.DateTime.Now;
+            var dateString = string.Format("{0:D4}{1:D2}{2:D2}_{3:D2}{4:D2}{5:D2}_", date.Year, date.Month, date.Day, date.Hour, date.Minute, date.Second);
+            var profilerName = ProfilerDriver.GetConnectionIdentifier(ProfilerDriver.connectedProfiler);
+
+            this.saveDirectory = "FrameDebugger/" + dateString + profilerName;
+            System.IO.Directory.CreateDirectory(saveDirectory);
+
             endCallback = callback;
             EditorApplication.update += Update;
         }
@@ -124,25 +172,23 @@ namespace UTJ.FrameDebugSave
             var frameEvents = frameDebuggeUtil.CallMethod<System.Array>( "GetFrameEvents", null, null);
             var breakReasons = frameDebuggeUtil.CallMethod<string[]>("GetBatchBreakCauseStrings", null, null);
             var frameEventDatas = r.GetTypeObject("UnityEditorInternal.FrameDebuggerEventData");
-
-
             var evtData = frameDebuggeUtil.CreateInstance();
             int count = frameDebuggeUtil.GetPropertyValue<int>( "count", null);
 
 
+            this.CreateFrameDebuggerEventList(frameEvents);
             this.frameDebuggerEventDataList = new List<FrameDebuggerEventData>(count);
 
 
             for ( int i = 0; i <= count; ++i)
             {
                 yield return null;
-                //                this.frameDebuggeUtil.SetPropertyValue( "limit",null, i);
                 this.frameDebuggerWindowObj.CallMethod<object>("ChangeFrameEventLimit",new object[] { i });
                 this.frameDebuggerWindowObj.CallMethod<object>("RepaintOnLimitChange",null);
                 int targetFrameIdx = i - 1;
                 if(targetFrameIdx < 0 || targetFrameIdx >= frameEvents.Length) { continue; }
-                // wait for remote dataveNext()) { }
 
+                // getTargetFrameInfo
                 var eventDataCoroutine = this.TryGetFrameEvnetData(targetFrameIdx, 2.0);
                 while (eventDataCoroutine.MoveNext())
                 {
@@ -157,17 +203,16 @@ namespace UTJ.FrameDebugSave
                 FrameDebuggerEventData frameInfo = new FrameDebuggerEventData();
                 frameData.CopyFieldsToObjectByVarName<FrameDebuggerEventData>(ref frameInfo);
                 frameInfo.batchBreakCauseStr = breakReasons[frameInfo.batchBreakCause];
+                CreateShaderPropInfos(frameInfo);
 
-                frameDebuggerEventDataList.Add(frameInfo);
-
-                currentProgress = i / (float)count;
-                UnityEngine.Debug.Log(frameInfo.frameEventIndex + "  " +
-                    frameInfo.shaderName + "\n" +
-                    frameInfo.passName + "\n" +
-                    frameInfo.shaderKeywords + "\n" +
-                    frameInfo.batchBreakCauseStr);
+                frameDebuggerEventDataList.Add(frameInfo);                
             }
             yield return null;
+        }
+
+        private void CreateShaderPropInfos(FrameDebuggerEventData frameInfo)
+        {
+            var props = frameInfo.shaderProperties;
         }
 
         private IEnumerator WaitForRemoteConnect(double deltaTime)
@@ -230,6 +275,11 @@ namespace UTJ.FrameDebugSave
                 ret = null;
             }
             return result;
+        }
+
+        private void CreateFrameDebuggerEventList(System.Array arr)
+        {
+            this.frameDebuggerEventList = ReflectionClassWithObject.CopyToListFromArray<FrameDebuggerEvent>(arr, this.reflectionCache);
         }
 
     }
