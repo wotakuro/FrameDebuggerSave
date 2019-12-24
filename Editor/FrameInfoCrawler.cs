@@ -1,12 +1,13 @@
 ﻿using System.Collections;
-using System;
+using System.Collections.Generic;
 using UnityEditor;
+using UnityEngine;
 
 namespace UTJ.FrameDebugSave
 {
     public class FrameInfoCrawler
     {
-        public struct FrameInfo
+        public class FrameDebuggerEventData
         {
             // inform
             public int frameEventIndex;
@@ -48,6 +49,12 @@ namespace UTJ.FrameDebugSave
             public string batchBreakCauseStr;
         }
 
+        public class FrameDebuggerEvent
+        {
+            public object type;
+            public GameObject gameObject;
+        }
+
         private IEnumerator enumerator;
         private System.Action endCallback;
 
@@ -61,6 +68,11 @@ namespace UTJ.FrameDebugSave
         private ReflectionClassWithObject frameDebuggerWindowObj;
 
         private string[] breakReasons;
+
+        public List<FrameDebuggerEventData> frameDebuggerEventDataList { get; private set; }
+        public List<FrameDebuggerEvent> frameDebuggerEventList { get; private set; }
+
+
 
         public FrameInfoCrawler()
         {
@@ -78,6 +90,11 @@ namespace UTJ.FrameDebugSave
             EditorApplication.update += Update;
         }
 
+        public void CloseFrameDebuggerWindow()
+        {
+            frameDebuggerWindowObj.CallMethod<object>("Close", null);
+        }
+
         private void Update()
         {
             if (enumerator == null)
@@ -92,7 +109,7 @@ namespace UTJ.FrameDebugSave
             }
         }
 
-        public IEnumerator Execute()
+        private IEnumerator Execute()
         {
             currentProgress = 0.0f;
             var waitForConnect = WaitForRemoteConnect(10.0);
@@ -113,6 +130,7 @@ namespace UTJ.FrameDebugSave
             int count = frameDebuggeUtil.GetPropertyValue<int>( "count", null);
 
 
+            this.frameDebuggerEventDataList = new List<FrameDebuggerEventData>(count);
 
 
             for ( int i = 0; i <= count; ++i)
@@ -136,10 +154,11 @@ namespace UTJ.FrameDebugSave
                     continue;
                 }
 
-                FrameInfo frameInfo = new FrameInfo();
-                frameData.CopyFieldsToObjectByVarName<FrameInfo>(ref frameInfo);
+                FrameDebuggerEventData frameInfo = new FrameDebuggerEventData();
+                frameData.CopyFieldsToObjectByVarName<FrameDebuggerEventData>(ref frameInfo);
                 frameInfo.batchBreakCauseStr = breakReasons[frameInfo.batchBreakCause];
 
+                frameDebuggerEventDataList.Add(frameInfo);
 
                 currentProgress = i / (float)count;
                 UnityEngine.Debug.Log(frameInfo.frameEventIndex + "  " +
