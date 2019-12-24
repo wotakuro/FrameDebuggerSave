@@ -34,11 +34,11 @@ namespace UTJ.FrameDebugSave
             public System.Array buffers;
 
             // NonSerialized
-            public List<ShaderPropertyInfo> floatProps;
-            public List<ShaderPropertyInfo> vectorProps;
-            public List<ShaderPropertyInfo> matrixProps;
-            public List<ShaderPropertyInfo> textureProps;
-            public List<ShaderPropertyInfo> bufferProps;
+            public List<ShaderPropertyInfo> convertedFloats;
+            public List<ShaderPropertyInfo> convertedVectors;
+            public List<ShaderPropertyInfo> convertedMatricies;
+            public List<ShaderPropertyInfo> convertedTextures;
+            public List<ShaderPropertyInfo> convertedBuffers;
         }
 
         public class FrameDebuggerEventData
@@ -84,6 +84,7 @@ namespace UTJ.FrameDebugSave
 
             // non Serialized 
             public string batchBreakCauseStr;
+            public ShaderProperties convertedProperties;
         }
 
         public class FrameDebuggerEvent
@@ -203,7 +204,7 @@ namespace UTJ.FrameDebugSave
                 FrameDebuggerEventData frameInfo = new FrameDebuggerEventData();
                 frameData.CopyFieldsToObjectByVarName<FrameDebuggerEventData>(ref frameInfo);
                 frameInfo.batchBreakCauseStr = breakReasons[frameInfo.batchBreakCause];
-                CreateShaderPropInfos(frameInfo);
+                this.CreateShaderPropInfos(frameInfo);
 
                 frameDebuggerEventDataList.Add(frameInfo);                
             }
@@ -212,7 +213,18 @@ namespace UTJ.FrameDebugSave
 
         private void CreateShaderPropInfos(FrameDebuggerEventData frameInfo)
         {
-            var props = frameInfo.shaderProperties;
+            var originProps = frameInfo.shaderProperties;
+            var originPropType = this.reflectionCache.GetTypeObject(originProps.GetType());
+            var originPropReflection = new ReflectionClassWithObject( originPropType,originProps);
+            frameInfo.convertedProperties = new ShaderProperties();
+            originPropReflection.CopyFieldsToObjectByVarName<ShaderProperties>(ref frameInfo.convertedProperties);
+            var props = frameInfo.convertedProperties;
+
+            props.convertedFloats = ReflectionClassWithObject.CopyToListFromArray<ShaderPropertyInfo>(this.reflectionCache,props.floats);
+            props.convertedVectors = ReflectionClassWithObject.CopyToListFromArray<ShaderPropertyInfo>(this.reflectionCache, props.vectors);
+            props.convertedMatricies = ReflectionClassWithObject.CopyToListFromArray<ShaderPropertyInfo>(this.reflectionCache,props.matrices);
+            props.convertedTextures = ReflectionClassWithObject.CopyToListFromArray<ShaderPropertyInfo>(this.reflectionCache,props.textures);
+            props.convertedBuffers = ReflectionClassWithObject.CopyToListFromArray<ShaderPropertyInfo>(this.reflectionCache,props.buffers);
         }
 
         private IEnumerator WaitForRemoteConnect(double deltaTime)
@@ -279,7 +291,7 @@ namespace UTJ.FrameDebugSave
 
         private void CreateFrameDebuggerEventList(System.Array arr)
         {
-            this.frameDebuggerEventList = ReflectionClassWithObject.CopyToListFromArray<FrameDebuggerEvent>(arr, this.reflectionCache);
+            this.frameDebuggerEventList = ReflectionClassWithObject.CopyToListFromArray<FrameDebuggerEvent>(this.reflectionCache,arr);
         }
 
     }

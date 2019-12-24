@@ -30,6 +30,17 @@ namespace UTJ.FrameDebugSave
             }
             return null;
         }
+        public ReflectionType GetTypeObject(System.Type t)
+        {
+            ReflectionType type = null;
+            if (typeCache.TryGetValue(t.FullName, out type))
+            {
+                return type;
+            }
+            type = new ReflectionType(t);
+            typeCache.Add(t.FullName, type);
+            return type;
+        }
 
         public object CreateInstance(System.Type t)
         {
@@ -204,7 +215,7 @@ namespace UTJ.FrameDebugSave
         }
 
 
-        public static List<T> CopyToListFromArray<T>(System.Array arr,ReflectionCache cache)
+        public static List<T> CopyToListFromArray<T>(ReflectionCache cache, System.Array arr)
         {
             if( arr == null) { return null; }
             List<T> list = new List<T>(arr.Length);
@@ -213,7 +224,7 @@ namespace UTJ.FrameDebugSave
             foreach (var obj in arr)
             {
                 T dest = (T)System.Activator.CreateInstance(typeof(T));
-                var reflectionType = cache.GetTypeObject(obj.GetType().FullName);
+                var reflectionType = cache.GetTypeObject(obj.GetType());
                 var reflectionClassWithObject = new ReflectionClassWithObject(reflectionType, obj);
                 reflectionClassWithObject.CopyFieldsToObjectByVarName(ref dest);
                 list.Add(dest);
