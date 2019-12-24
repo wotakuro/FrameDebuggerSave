@@ -276,7 +276,15 @@ namespace UTJ.FrameDebugSave
 
         private bool GetFrameEventData(int frameIdx,out ReflectionClassWithObject ret)
         {
-            var args = new object[] { frameIdx, null };
+            object[] args = null;
+
+#if UNITY_2019_3_OR_NEWER
+            args = new object[]{ frameIdx,  this.frameEventData.CreateInstance()};
+#else
+            args = new object[] { frameIdx, null };
+#endif
+
+
             bool result = this.frameDebuggeUtil.CallMethod<bool>( "GetFrameEventData", null, args);
             if (result)
             {
