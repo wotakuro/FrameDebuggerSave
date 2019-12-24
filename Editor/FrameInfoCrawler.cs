@@ -95,6 +95,11 @@ namespace UTJ.FrameDebugSave
         public IEnumerator Execute()
         {
             currentProgress = 0.0f;
+            var waitForConnect = WaitForRemoteConnect(10.0);
+            while (waitForConnect.MoveNext())
+            {
+                yield return null;
+            }
             yield return null;
             yield return null;
 
@@ -106,7 +111,6 @@ namespace UTJ.FrameDebugSave
 
             var evtData = frameDebuggeUtil.CreateInstance();
             int count = frameDebuggeUtil.GetPropertyValue<int>( "count", null);
-            UnityEngine.Debug.Log("count " + count);
 
 
 
@@ -146,7 +150,33 @@ namespace UTJ.FrameDebugSave
             }
             yield return null;
         }
-        
+
+        private IEnumerator WaitForRemoteConnect(double deltaTime)
+        {
+            bool isRemoteEnalbed = frameDebuggeUtil.CallMethod<bool>("IsRemoteEnabled", null, null);
+            bool isReceiving = frameDebuggeUtil.GetPropertyValue<bool>("receivingRemoteFrameEventData", null);
+
+            double startTime = EditorApplication.timeSinceStartup;
+            // wait for remote data
+            if (isRemoteEnalbed && isReceiving)
+            {
+                while ( (EditorApplication.timeSinceStartup - startTime) < deltaTime)
+                {
+                    this.frameDebuggerWindowObj.CallMethod<object>("RepaintOnLimitChange", null);
+                    isRemoteEnalbed = frameDebuggeUtil.CallMethod<bool>("IsRemoteEnabled", null, null);
+                    isReceiving = frameDebuggeUtil.GetPropertyValue<bool>("receivingRemoteFrameEventData", null);
+                    if (isRemoteEnalbed && isReceiving)
+                    {
+                        yield return null;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+        }
 
         private IEnumerator TryGetFrameEvnetData(int frameIdx,double deltaTime = 2 )
         {
