@@ -110,6 +110,7 @@ namespace UTJ.FrameDebugSave
 
 
 
+
             for ( int i = 0; i <= count; ++i)
             {
                 yield return null;
@@ -118,7 +119,9 @@ namespace UTJ.FrameDebugSave
                 this.frameDebuggerWindowObj.CallMethod<object>("RepaintOnLimitChange",null);
                 int targetFrameIdx = i - 1;
                 if(targetFrameIdx < 0 || targetFrameIdx >= frameEvents.Length) { continue; }
-                var eventDataCoroutine = this.TryGetFrameEvnetData(targetFrameIdx, 3);
+                // wait for remote dataveNext()) { }
+
+                var eventDataCoroutine = this.TryGetFrameEvnetData(targetFrameIdx, 2.0);
                 while (eventDataCoroutine.MoveNext())
                 {
                     yield return null;
@@ -143,15 +146,22 @@ namespace UTJ.FrameDebugSave
             }
             yield return null;
         }
+        
 
-        private IEnumerator TryGetFrameEvnetData(int frameIdx,int tryNum = 3 )
+        private IEnumerator TryGetFrameEvnetData(int frameIdx,double deltaTime = 2 )
         {
+
+            double startTime = EditorApplication.timeSinceStartup;
+
             int limit = frameDebuggeUtil.GetPropertyValue<int>("limit", null);
-            for (int i = 0; i < tryNum; ++i)
+            while ((EditorApplication.timeSinceStartup - startTime) < deltaTime)
             {
                 bool res = GetFrameEventData(frameIdx,out this.currentFrameEventData);
-                if (!res)
+                if (res)
                 {
+                    break;
+                }
+                else { 
                     currentFrameEventData = null;
                     yield return null;
                 }
@@ -168,8 +178,7 @@ namespace UTJ.FrameDebugSave
             }
             else
             {
-                ret = new ReflectionClassWithObject(frameEventData, args[1]);
-                return true;
+                ret = null;
             }
             return result;
         }
