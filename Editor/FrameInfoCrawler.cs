@@ -9,11 +9,12 @@ namespace UTJ.FrameDebugSave
     public class FrameInfoCrawler
     {
         [System.Flags]
-        public enum CrawlerFlag
+        public enum CaptureFlag
         {
             None = 0,
             ScreenShotBySteps = 1,// EditorOnly
             ShaderTexture = 2, //EditorOnly
+            FinalTexture = 4, // EditorOnly
         }
 
         public class ShaderPropertyInfo
@@ -93,7 +94,10 @@ namespace UTJ.FrameDebugSave
             public GameObject gameObject;
         }
 
-
+        public bool IsRunning
+        {
+            get;private set;
+        }
 
 
         public List<FrameDebuggerEventData> frameDebuggerEventDataList { get; private set; }
@@ -116,18 +120,23 @@ namespace UTJ.FrameDebugSave
         private string[] breakReasons;
 
 
-        public FrameInfoCrawler()
+        public FrameInfoCrawler(ReflectionCache rcache)
         {
-            this.reflectionCache = new ReflectionCache();
+            this.reflectionCache = rcache;
             this.frameDebuggeUtil = reflectionCache.GetTypeObject("UnityEditorInternal.FrameDebuggerUtility");
             this.frameEventData = reflectionCache.GetTypeObject("UnityEditorInternal.FrameDebuggerEventData");
 
             var frameDebuggerWindowType = this.reflectionCache.GetTypeObject("UnityEditor.FrameDebuggerWindow");
             var window = frameDebuggerWindowType.CallMethod<object>("ShowFrameDebuggerWindow", null, null);
             this.frameDebuggerWindowObj = new ReflectionClassWithObject(frameDebuggerWindowType, window);
+
+            this.IsRunning = false;
         }
-        public void Setup(System.Action callback)
+        public void Request(CaptureFlag flag,System.Action callback)
         {
+            if(this.IsRunning) { return; }
+            this.IsRunning = true;
+
             var date = System.DateTime.Now;
             var dateString = string.Format("{0:D4}{1:D2}{2:D2}_{3:D2}{4:D2}{5:D2}_", date.Year, date.Month, date.Day, date.Hour, date.Minute, date.Second);
             var profilerName = ProfilerDriver.GetConnectionIdentifier(ProfilerDriver.connectedProfiler);
@@ -154,6 +163,7 @@ namespace UTJ.FrameDebugSave
             if(!result)
             {
                 endCallback();
+                this.IsRunning = false;
                 EditorApplication.update -= Update;
             }
         }
@@ -300,6 +310,23 @@ namespace UTJ.FrameDebugSave
         private void CreateFrameDebuggerEventList(System.Array arr)
         {
             this.frameDebuggerEventList = ReflectionClassWithObject.CopyToListFromArray<FrameDebuggerEvent>(this.reflectionCache,arr);
+        }
+
+
+
+        private void SaveRenderTexture(RenderTexture renderTexture, string file)
+        {
+            Texture2D tex = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.RGB24, false);
+            RenderTexture.active = renderTexture;
+            tex.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
+            tex.Apply();
+
+            // Encode texture into PNG
+            byte[] bytes = tex.EncodeToPNG();
+            Object.DestroyImmediate(tex);
+
+            //Write to a file in the project folder
+            System.IO.File.WriteAllBytes(file, bytes);
         }
 
     }
