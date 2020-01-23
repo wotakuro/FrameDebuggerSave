@@ -125,6 +125,17 @@ namespace UTJ.FrameDebugSave
             this.stringBuilder.Append('"');
             return this;
         }
+        public JsonStringGenerator AddObjectValue(string name, int val)
+        {
+            ExecuteObjectNum();
+            NextLine();
+            ExecuteWhiteSpace();
+            this.stringBuilder.Append('"');
+            this.stringBuilder.Append(name);
+            this.stringBuilder.Append("\":");
+            this.stringBuilder.Append(val);
+            return this;
+        }
         public JsonStringGenerator AddObjectValue(string name, float val)
         {
             ExecuteObjectNum();

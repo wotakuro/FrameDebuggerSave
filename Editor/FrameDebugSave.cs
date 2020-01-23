@@ -23,19 +23,24 @@ namespace UTJ.FrameDebugSave
 
         private void OnEnable()
         {
-            this.reflectionCache = new ReflectionCache();
         }
 
         private void OnGUI()
         {
-            captureFlag = (FrameInfoCrawler.CaptureFlag)EditorGUILayout.EnumFlagsField("CaptureFlag",captureFlag);
-            if(GUILayout.Button("Capture via FrameDebugger"))
+            captureFlag = (FrameInfoCrawler.CaptureFlag)EditorGUILayout.EnumFlagsField("CaptureFlag", captureFlag);
+            if (GUILayout.Button("Capture via FrameDebugger"))
             {
                 Execute();
             }
         }
 
-        public void Execute() { 
+        public void Execute()
+        {
+            if( this.reflectionCache == null)
+            {
+                this.reflectionCache = new ReflectionCache();
+            }
+
             var frameDebuggeUtil = reflectionCache.GetTypeObject("UnityEditorInternal.FrameDebuggerUtility");
 
             // show FrameDebuggerWindow
@@ -46,7 +51,7 @@ namespace UTJ.FrameDebugSave
             {
                 crawler = new FrameInfoCrawler(this.reflectionCache);
             }
-            crawler.Request(FrameInfoCrawler.CaptureFlag.None, EndCrawler);
+            crawler.Request(this.captureFlag, EndCrawler);
         }
 
 
@@ -54,14 +59,14 @@ namespace UTJ.FrameDebugSave
 
         private void EndCrawler()
         {
-            string dirPath =  crawler.saveDirectory;
+            string dirPath = crawler.saveDirectory;
             // directory
             SaveFrameDebuggerEventsCsv(dirPath);
             SaveDetailJsonData(dirPath);
             EditorUtility.DisplayDialog("Saved", dirPath, "ok");
             crawler = null;
         }
-        
+
         private void SaveFrameDebuggerEventsCsv(string dirPath)
         {
             CsvStringGenerator csvStringGenerator = new CsvStringGenerator();
@@ -93,10 +98,9 @@ namespace UTJ.FrameDebugSave
             for (int i = 0; i < crawler.frameDebuggerEventDataList.Count; ++i)
             {
                 var evtData = crawler.frameDebuggerEventDataList[i];
+                var evt = crawler.frameDebuggerEventList[i];
 
                 csvStringGenerator.AppendColumn(evtData.frameEventIndex);
-
-                var evt = crawler.frameDebuggerEventList[i];
                 csvStringGenerator.AppendColumn(evt.type.ToString());
 
                 csvStringGenerator.AppendColumn(evtData.rtName).
@@ -129,17 +133,19 @@ namespace UTJ.FrameDebugSave
             {
                 using (new JsonStringGenerator.ObjectScope(jsonStringGenerator))
                 {
+                    jsonStringGenerator.AddObjectValue("captureFlag", (int)captureFlag);
                     using (new JsonStringGenerator.ObjectArrayValueScope(jsonStringGenerator, "frames"))
                     {
                         for (int i = 0; i < crawler.frameDebuggerEventDataList.Count; ++i)
                         {
                             var evt = crawler.frameDebuggerEventList[i];
                             var evtData = crawler.frameDebuggerEventDataList[i];
-                            AppendFrameEvent(jsonStringGenerator, evt,evtData);
+                            AppendFrameEvent(jsonStringGenerator, evt, evtData);
                         }
                     }
                 }
-            }catch(System.Exception e)
+            }
+            catch (System.Exception e)
             {
                 Debug.LogError(e);
             }
@@ -152,10 +158,43 @@ namespace UTJ.FrameDebugSave
         {
             using (new JsonStringGenerator.ObjectScope(jsonStringGenerator))
             {
-                AppendShaderInfo(jsonStringGenerator , evtData);
+                jsonStringGenerator.AddObjectValue("frameEventIndex",evtData.frameEventIndex);
+                jsonStringGenerator.AddObjectValue("type",evt.type.ToString());
+                AppendRenderingInfo(jsonStringGenerator, evt, evtData);
+                AppendRenderTargetInfo(jsonStringGenerator, evtData);
+                AppendShaderInfo(jsonStringGenerator, evtData);
             }
         }
-        private void AppendShaderInfo( JsonStringGenerator jsonStringGenerator,
+        private void AppendRenderingInfo(JsonStringGenerator jsonStringGenerator,
+            FrameInfoCrawler.FrameDebuggerEvent evt,
+            FrameInfoCrawler.FrameDebuggerEventData evtData)
+        {
+            using (new JsonStringGenerator.ObjectScopeWithName(jsonStringGenerator, "rendering"))
+            {
+                jsonStringGenerator.AddObjectValue("vertexCount", evtData.vertexCount).
+                    AddObjectValue("indexCount", evtData.indexCount).
+                    AddObjectValue("instanceCount", evtData.instanceCount).
+                    AddObjectValue("drawCallCount", evtData.drawCallCount).
+                    AddObjectValue("componentInstanceID", evtData.componentInstanceID).
+                    AddObjectValue("meshInstanceID", evtData.meshInstanceID).
+                    AddObjectValue("meshSubset", evtData.meshSubset).
+                    AddObjectValue("batchBreakCauseStr", evtData.batchBreakCauseStr);
+            }
+        }
+
+        private void AppendRenderTargetInfo(JsonStringGenerator jsonStringGenerator,
+            FrameInfoCrawler.FrameDebuggerEventData evtData)
+        {
+            using (new JsonStringGenerator.ObjectScopeWithName(jsonStringGenerator, "renderTarget"))
+            {
+                jsonStringGenerator.AddObjectValue("rtName",evtData.rtName).
+                    AddObjectValue("rtWidth", evtData.rtWidth).AddObjectValue("rtHeight", evtData.rtHeight).
+                    AddObjectValue("rtCount",evtData.rtCount).AddObjectValue("rtHasDepthTexture",evtData.rtHasDepthTexture);
+            }
+        }
+
+
+        private void AppendShaderInfo(JsonStringGenerator jsonStringGenerator,
             FrameInfoCrawler.FrameDebuggerEventData evtData)
         {
 
@@ -172,52 +211,91 @@ namespace UTJ.FrameDebugSave
             }
         }
 
-        private void AppendShaderParam( JsonStringGenerator jsonStringGenerator, FrameInfoCrawler.ShaderProperties shaderParams)
+        private void AppendShaderParam(JsonStringGenerator jsonStringGenerator, FrameInfoCrawler.ShaderProperties shaderParams)
         {
-            using (new JsonStringGenerator.ObjectArrayValueScope(jsonStringGenerator,"Params"))
+            using (new JsonStringGenerator.ObjectScopeWithName(jsonStringGenerator, "params"))
             {
+                AppendShaderParamTextures(jsonStringGenerator, shaderParams);
+                AppendShaderParamFloats(jsonStringGenerator, shaderParams);
+                AppendShaderParamVectors(jsonStringGenerator, shaderParams);
+                AppendShaderParamMatricies(jsonStringGenerator, shaderParams);
+                
+            }
+        }
+        private void AppendShaderParamTextures(JsonStringGenerator jsonStringGenerator, FrameInfoCrawler.ShaderProperties shaderParams)
+        {
+            if (shaderParams.convertedTextures == null) { return; }
 
-                if (shaderParams.convertedFloats != null)
+            using (new JsonStringGenerator.ObjectArrayValueScope(jsonStringGenerator, "textures"))
+            {
+                foreach (var textureParam in shaderParams.convertedTextures)
                 {
-                    foreach (var floatParam in shaderParams.convertedFloats)
+                    using (new JsonStringGenerator.ObjectScope(jsonStringGenerator))
                     {
-                        using (new JsonStringGenerator.ObjectScope(jsonStringGenerator))
+                        var val = textureParam.value as Texture;
+                        jsonStringGenerator.AddObjectValue("name", textureParam.textureName);
+                        if (val != null)
                         {
-                            jsonStringGenerator.AddObjectValue("type", "float");
-                            jsonStringGenerator.AddObjectValue(floatParam.name, (float)floatParam.value);
-                        }
-                    }
-                    foreach (var vectorParam in shaderParams.convertedVectors)
-                    {
-                        using (new JsonStringGenerator.ObjectScope(jsonStringGenerator))
-                        {
-                            jsonStringGenerator.AddObjectValue("type", "Vector");
-                            var val = (Vector4)vectorParam.value;
-                            jsonStringGenerator.AddObjectVector(vectorParam.name, ref val);
-                        }
-                    }
-                    foreach (var matrixParam in shaderParams.convertedMatricies)
-                    {
-                        using (new JsonStringGenerator.ObjectScope(jsonStringGenerator))
-                        {
-                            jsonStringGenerator.AddObjectValue("type", "Matrix");
-                            var val = (Matrix4x4)matrixParam.value;
-                            jsonStringGenerator.AddObjectMatrix(matrixParam.name, ref val);
-                        }
-                    }
-                    foreach (var textureParam in shaderParams.convertedTextures)
-                    {
-                        using (new JsonStringGenerator.ObjectScope(jsonStringGenerator))
-                        {
-                            var val = (Texture)textureParam.value;
-                            jsonStringGenerator.AddObjectValue("type", "Texture");
-                            jsonStringGenerator.AddObjectValue("name", textureParam.textureName);
                             jsonStringGenerator.AddObjectValue("format", val.graphicsFormat.ToString());
                         }
                     }
                 }
             }
         }
-    }
+        private void AppendShaderParamFloats(JsonStringGenerator jsonStringGenerator, FrameInfoCrawler.ShaderProperties shaderParams)
+        {
+            if (shaderParams.convertedFloats == null) { return; }
 
+            using (new JsonStringGenerator.ObjectArrayValueScope(jsonStringGenerator, "floats"))
+            {
+                foreach (var floatParam in shaderParams.convertedFloats)
+                {
+                    using (new JsonStringGenerator.ObjectScope(jsonStringGenerator))
+                    {
+                        jsonStringGenerator.AddObjectValue(floatParam.name, (float)floatParam.value);
+                    }
+                }
+            }
+        }
+        private void AppendShaderParamVectors(JsonStringGenerator jsonStringGenerator, FrameInfoCrawler.ShaderProperties shaderParams)
+        {
+            if (shaderParams.convertedVectors == null) { return; }
+
+            using (new JsonStringGenerator.ObjectArrayValueScope(jsonStringGenerator, "vectors"))
+            {
+                foreach (var vectorParam in shaderParams.convertedVectors)
+                {
+                    using (new JsonStringGenerator.ObjectScope(jsonStringGenerator))
+                    {
+                        var val = (Vector4)vectorParam.value;
+                        jsonStringGenerator.AddObjectVector(vectorParam.name, ref val);
+                    }
+                }
+
+            }
+        }
+        private void AppendShaderParamMatricies(JsonStringGenerator jsonStringGenerator, FrameInfoCrawler.ShaderProperties shaderParams)
+        {
+            if (shaderParams.convertedMatricies == null) { return; }
+            using (new JsonStringGenerator.ObjectArrayValueScope(jsonStringGenerator, "matricies"))
+            {
+                foreach (var matrixParam in shaderParams.convertedMatricies)
+                {
+                    using (new JsonStringGenerator.ObjectScope(jsonStringGenerator))
+                    {
+                        var val = (Matrix4x4)matrixParam.value;
+                        jsonStringGenerator.AddObjectMatrix(matrixParam.name, ref val);
+                    }
+                }
+            }
+        }
+        private void AppendShaderParamBuffers(JsonStringGenerator jsonStringGenerator, FrameInfoCrawler.ShaderProperties shaderParams)
+        {
+            if (shaderParams.convertedBuffers == null) { return; }
+            using (new JsonStringGenerator.ObjectArrayValueScope(jsonStringGenerator, "buffers"))
+            {
+            }
+        }
+
+    }
 }
