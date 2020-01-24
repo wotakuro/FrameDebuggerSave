@@ -8,35 +8,16 @@ using System.Text;
 
 namespace UTJ.FrameDebugSave
 {
-    public class FrameDebugSave : EditorWindow
-    {
+    public class FameDebugSave {
         private FrameInfoCrawler crawler;
+        private ReflectionCache reflectionCache;
         private FrameInfoCrawler.CaptureFlag captureFlag;
 
-        private ReflectionCache reflectionCache;
 
-        [MenuItem("Tools/FrameDebuggerSave")]
-        public static void CreateWindow()
+        public void Execute(FrameInfoCrawler.CaptureFlag flag)
         {
-            EditorWindow.GetWindow<FrameDebugSave>();
-        }
-
-        private void OnEnable()
-        {
-        }
-
-        private void OnGUI()
-        {
-            captureFlag = (FrameInfoCrawler.CaptureFlag)EditorGUILayout.EnumFlagsField("CaptureFlag", captureFlag);
-            if (GUILayout.Button("Capture via FrameDebugger"))
-            {
-                Execute();
-            }
-        }
-
-        public void Execute()
-        {
-            if( this.reflectionCache == null)
+            this.captureFlag = flag;
+            if ( this.reflectionCache == null)
             {
                 this.reflectionCache = new ReflectionCache();
             }
@@ -51,7 +32,7 @@ namespace UTJ.FrameDebugSave
             {
                 crawler = new FrameInfoCrawler(this.reflectionCache);
             }
-            crawler.Request(this.captureFlag, EndCrawler);
+            crawler.Request(flag, EndCrawler);
         }
 
 
@@ -294,6 +275,10 @@ namespace UTJ.FrameDebugSave
             if (shaderParams.convertedBuffers == null) { return; }
             using (new JsonStringGenerator.ObjectArrayValueScope(jsonStringGenerator, "buffers"))
             {
+                foreach (var bufferParam in shaderParams.convertedBuffers)
+                {
+                    jsonStringGenerator.AddObjectValue(bufferParam.name, "No Implements");
+                }
             }
         }
 

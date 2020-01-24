@@ -25,6 +25,8 @@ namespace UTJ.FrameDebugSave
             public int flags;
             public string textureName;
             public object value;
+
+            public TextureUtility.SaveTextureInfo saveTextureInfo;
         }
 
 
@@ -86,6 +88,7 @@ namespace UTJ.FrameDebugSave
             public object shaderProperties;
 
             // non Serialized 
+            public TextureUtility.SaveTextureInfo savedScreenShotInfo;
             public string batchBreakCauseStr;
             public ShaderProperties convertedProperties;
         }
@@ -96,10 +99,12 @@ namespace UTJ.FrameDebugSave
             public GameObject gameObject;
         }
 
+
         public bool IsRunning
         {
             get;private set;
         }
+
 
 
         public List<FrameDebuggerEventData> frameDebuggerEventDataList { get; private set; }
@@ -122,7 +127,9 @@ namespace UTJ.FrameDebugSave
         private string[] breakReasons;
         private CaptureFlag captureFlag;
 
-        private Dictionary<int, string> alreadyWriteTextureDict; 
+        private Dictionary<int, TextureUtility.SaveTextureInfo> alreadyWriteTextureDict;
+        private Dictionary<int, int> renderTextureLastChanged;
+
 
         public FrameInfoCrawler(ReflectionCache rcache)
         {
@@ -135,7 +142,8 @@ namespace UTJ.FrameDebugSave
             this.frameDebuggerWindowObj = new ReflectionClassWithObject(frameDebuggerWindowType, window);
 
             this.IsRunning = false;
-            this.alreadyWriteTextureDict = new Dictionary<int, string>();
+            this.alreadyWriteTextureDict = new Dictionary<int, TextureUtility.SaveTextureInfo>();
+            this.renderTextureLastChanged = new Dictionary<int, int>();
         }
         public void Request(CaptureFlag flag,System.Action callback)
         {
@@ -143,6 +151,7 @@ namespace UTJ.FrameDebugSave
             this.captureFlag = flag;
             this.IsRunning = true;
             this.alreadyWriteTextureDict.Clear();
+            this.renderTextureLastChanged.Clear();
 
 
             var date = System.DateTime.Now;
@@ -228,6 +237,7 @@ namespace UTJ.FrameDebugSave
                 bool isRemoteEnalbed = frameDebuggeUtil.CallMethod<bool>("IsRemoteEnabled", null, null);
                 if (!isRemoteEnalbed)
                 {
+                    SetRenderTextureLastChange(frameInfo);
                     // save shader texture
                     ExecuteShaderTextureSave(frameInfo);
                     // capture screen shot
@@ -235,6 +245,24 @@ namespace UTJ.FrameDebugSave
                 }
             }
             yield return null;
+        }
+
+        private void SetRenderTextureLastChange(FrameDebuggerEventData frameInfo)
+        {
+            var rt = TextureUtility.GetTargetRenderTexture(frameInfo);
+            if( rt == null)
+            {
+                return;
+            }
+            int instanceId = rt.GetInstanceID();
+            if(this.renderTextureLastChanged.ContainsKey(instanceId))
+            {
+                renderTextureLastChanged[instanceId] = frameInfo.frameEventIndex;
+            }
+            else
+            {
+                renderTextureLastChanged.Add(instanceId, frameInfo.frameEventIndex);
+            }
         }
 
         private void CreateShaderPropInfos(FrameDebuggerEventData frameInfo)
@@ -336,26 +364,36 @@ namespace UTJ.FrameDebugSave
             var textureParams = frameInfo.convertedProperties.convertedTextures;
             foreach( var textureParam in textureParams)
             {
+                TextureUtility.SaveTextureInfo saveTextureInfo = null;
                 var texture = textureParam.value as Texture;
                 if (texture == null) { continue; }
-                if (alreadyWriteTextureDict.ContainsKey(texture.GetInstanceID()))
+                // already saved
+                if (alreadyWriteTextureDict.TryGetValue(texture.GetInstanceID(), out saveTextureInfo))
                 {
+                    textureParam.saveTextureInfo = saveTextureInfo;
                     continue;
                 }
-
+                // save texture
                 string dir = System.IO.Path.Combine(this.saveDirectory, "shaderTexture");
-                string path = System.IO.Path.Combine(dir , texture.name );
+                string path = null;
                 if (!System.IO.Directory.Exists(dir))
                 {
                     System.IO.Directory.CreateDirectory(dir);
                 }
-
                 if ( texture.GetType() == typeof(Texture2D))
                 {
-                    string saved = SaveTexture((Texture2D)texture,path);
-                    alreadyWriteTextureDict.Add(texture.GetInstanceID(), saved);
-
+                    path = System.IO.Path.Combine(dir, texture.name); ;
+                    saveTextureInfo = TextureUtility.SaveTexture((Texture2D)texture,path);
+                    alreadyWriteTextureDict.Add(texture.GetInstanceID(), saveTextureInfo);
                 }
+                if( texture.GetType() == typeof(RenderTexture))
+                {
+                    int idx = -1;
+                    renderTextureLastChanged.TryGetValue(texture.GetInstanceID(),out idx);
+                    path = System.IO.Path.Combine(dir, "RT_" + idx + "_" + texture.name);
+                    saveTextureInfo = TextureUtility.SaveRenderTexture((RenderTexture)texture, path);
+                }
+                textureParam.saveTextureInfo = saveTextureInfo;
             }
         }
 
@@ -374,11 +412,11 @@ namespace UTJ.FrameDebugSave
 
             if (isGetFromTargetRT)
             {
-                renderTexture = GetTargetRenderTexture(frameInfo);
+                renderTexture = TextureUtility.GetTargetRenderTexture(frameInfo);
             }
             else
             {
-                renderTexture = GetGameViewRT();
+                renderTexture = TextureUtility.GetGameViewRT();
             }
             if( renderTexture != null && renderTexture)
             {
@@ -399,73 +437,9 @@ namespace UTJ.FrameDebugSave
                     path = System.IO.Path.Combine(dir, "ss-" + frameInfo.frameEventIndex );
                 }
 
-                SaveRenderTexture(renderTexture, path);                
+                TextureUtility.SaveRenderTexture(renderTexture, path);                
             }
         }
-
-        private RenderTexture GetGameViewRT()
-        {
-            var renderTextures = Resources.FindObjectsOfTypeAll<RenderTexture>();
-            foreach (var rt in renderTextures)
-            {
-                if( rt.name == "GameView RT")
-                {
-                    return rt;
-                }
-            }
-            return null;
-        }
-
-        private RenderTexture GetTargetRenderTexture(FrameDebuggerEventData info)
-        {
-            RenderTexture target = null;
-            var renderTextures = Resources.FindObjectsOfTypeAll<RenderTexture>();
-            foreach( var rt in renderTextures)
-            {
-                if( rt.width == info.rtWidth && rt.height == info.rtHeight && 
-                     rt.name == info.rtName)
-                {
-                    if( target != null) { Debug.LogWarning("Already find renderTarget."); }
-                    target = rt;
-                }
-            }
-            return target;
-        }
-
-        private string SaveRenderTexture(RenderTexture renderTexture, string file)
-        {
-            Texture2D tex = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.RGB24, false);
-            RenderTexture.active = renderTexture;
-            tex.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
-            tex.Apply();
-            byte[] bytes = tex.EncodeToPNG();
-            file += ".png";
-            System.IO.File.WriteAllBytes(file, bytes);
-            Object.DestroyImmediate(tex);
-            return file;
-        }
-
-        private string SaveTexture(Texture2D tex, string file)
-        {
-            Texture2D writeTexture = null;
-            if (tex.isReadable)
-            {
-                writeTexture = tex;
-            }
-            else
-            {
-                writeTexture = new Texture2D(tex.width, tex.height, tex.format,tex.mipmapCount,false);
-                Graphics.CopyTexture(tex, writeTexture);
-            }
-            byte[] bytes = writeTexture.EncodeToPNG();
-            file += ".png";
-            System.IO.File.WriteAllBytes(file, bytes);
-            if (tex != writeTexture)
-            {
-                Object.DestroyImmediate(writeTexture);
-            }
-            return file;
-        }
-
+        
     }
 }
