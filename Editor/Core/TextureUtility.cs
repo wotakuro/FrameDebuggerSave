@@ -96,7 +96,11 @@ namespace UTJ.FrameDebugSave
             switch (tex.format)
             {
             }
+            return false;
+        }
 
+        private bool ShouldSaveAsDepth(RenderTexture tex)
+        {
             return false;
         }
 
@@ -110,8 +114,36 @@ namespace UTJ.FrameDebugSave
             }
             return false;
         }
-        private bool IsCompress(Texture2D tex)
+        private bool ShoudSaveRawData(Texture2D tex)
         {
+            switch (tex.format)
+            {
+                case TextureFormat.DXT1:
+                case TextureFormat.DXT1Crunched:
+                case TextureFormat.DXT5:
+                case TextureFormat.DXT5Crunched:
+                    return true;
+                case TextureFormat.ASTC_4x4:
+                case TextureFormat.ASTC_5x5:
+                case TextureFormat.ASTC_6x6:
+                case TextureFormat.ASTC_8x8:
+                case TextureFormat.ASTC_10x10:
+                case TextureFormat.ASTC_12x12:
+                    return true;
+                case TextureFormat.BC4:
+                case TextureFormat.BC5:
+                case TextureFormat.BC6H:
+                case TextureFormat.BC7:
+                    return true;
+                case TextureFormat.ETC2_RGB:
+                case TextureFormat.ETC2_RGBA1:
+                case TextureFormat.ETC2_RGBA8:
+                case TextureFormat.ETC2_RGBA8Crunched:
+                    return true;
+                case TextureFormat.ETC_RGB4:
+                case TextureFormat.ETC_RGB4Crunched:
+                    return true;
+            }
             return false;
         }
     }
