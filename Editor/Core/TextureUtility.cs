@@ -26,7 +26,7 @@ namespace UTJ.FrameDebugSave
                 this.height = tex.height;
                 this.mipCount = tex.mipmapCount;
                 this.type = t;
-                this.path = p.Replace('\\','/');
+                this.path = System.IO.Path.GetFileName(p);
                 if( t == TYPE_RAWDATA && tex.GetType() == typeof(Texture2D))
                 {
                     this.rawFormat = ((Texture2D)tex).format;

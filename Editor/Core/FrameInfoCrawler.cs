@@ -423,7 +423,7 @@ namespace UTJ.FrameDebugSave
             {
                 return saveTextureInfo;
             }
-            string path = System.IO.Path.Combine(dir, texture.name); ;
+            string path = System.IO.Path.Combine(dir, texture.name +"_" +texture.GetInstanceID() ); ;
             saveTextureInfo = TextureUtility.SaveTexture((Texture2D)texture, path);
             alreadyWriteTextureDict.Add(texture.GetInstanceID(), saveTextureInfo);
             return saveTextureInfo;
