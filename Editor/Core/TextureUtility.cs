@@ -8,7 +8,30 @@ namespace UTJ.FrameDebugSave
     {
         public class SaveTextureInfo
         {
+            public const int TYPE_PNG = 0;
+            public const int TYPE_EXR = 1;
+            public const int TYPE_RAWDATA = 2;
+
             public string path;
+            public int type;
+            public int width;
+            public int height;
+
+            public TextureFormat rawFormat;
+            public int mipCount;
+
+            public SaveTextureInfo(string p,Texture tex,int t)
+            {
+                this.width = tex.width;
+                this.height = tex.height;
+                this.mipCount = tex.mipmapCount;
+                this.type = t;
+                this.path = p.Replace('\\','/');
+                if( t == TYPE_RAWDATA && tex.GetType() == typeof(Texture2D))
+                {
+                    this.rawFormat = ((Texture2D)tex).format;
+                }
+            }
         }
 
         public static RenderTexture GetGameViewRT()
@@ -42,16 +65,27 @@ namespace UTJ.FrameDebugSave
 
         public static SaveTextureInfo SaveRenderTexture(RenderTexture renderTexture, string file)
         {
-            SaveTextureInfo saveInfo = new SaveTextureInfo();
+            SaveTextureInfo saveInfo = null;
             try
             {
                 Texture2D tex = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.RGB24, false);
                 RenderTexture.active = renderTexture;
                 tex.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
                 tex.Apply();
-                byte[] bytes = tex.EncodeToPNG();
-                file += ".png";
-                System.IO.File.WriteAllBytes(file, bytes);
+                if (ShouldSaveEXR(tex) )
+                {
+                    byte[] bytes = tex.EncodeToEXR();
+                    file += ".exr";
+                    System.IO.File.WriteAllBytes(file, bytes);
+                    saveInfo = new SaveTextureInfo(file, renderTexture, SaveTextureInfo.TYPE_EXR);
+                }
+                else
+                {
+                    byte[] bytes = tex.EncodeToPNG();
+                    file += ".png";
+                    System.IO.File.WriteAllBytes(file, bytes);
+                    saveInfo = new SaveTextureInfo(file, renderTexture, SaveTextureInfo.TYPE_PNG);
+                }
                 Object.DestroyImmediate(tex);
                 return saveInfo;
             }catch(System.Exception e){
@@ -62,7 +96,7 @@ namespace UTJ.FrameDebugSave
 
         public static SaveTextureInfo SaveTexture(Texture2D tex, string file)
         {
-            SaveTextureInfo saveInfo = new SaveTextureInfo();
+            SaveTextureInfo saveInfo = null;
             try
             {
                 Texture2D writeTexture = null;
@@ -75,9 +109,27 @@ namespace UTJ.FrameDebugSave
                     writeTexture = new Texture2D(tex.width, tex.height, tex.format, tex.mipmapCount, false);
                     Graphics.CopyTexture(tex, writeTexture);
                 }
-                byte[] bytes = writeTexture.EncodeToPNG();
-                file += ".png";
-                System.IO.File.WriteAllBytes(file, bytes);
+                if (ShoudSaveRawData(tex))
+                {
+                    byte[] bytes = writeTexture.GetRawTextureData();
+                    file += ".raw";
+                    System.IO.File.WriteAllBytes(file, bytes);
+                    saveInfo = new SaveTextureInfo(file, tex, SaveTextureInfo.TYPE_RAWDATA);
+                }
+                else if (ShouldSaveEXR(tex))
+                {
+                    byte[] bytes = writeTexture.EncodeToEXR();
+                    file += ".exr";
+                    System.IO.File.WriteAllBytes(file, bytes);
+                    saveInfo = new SaveTextureInfo(file, tex, SaveTextureInfo.TYPE_PNG);
+                }
+                else
+                {
+                    byte[] bytes = writeTexture.EncodeToPNG();
+                    file += ".png";
+                    System.IO.File.WriteAllBytes(file, bytes);
+                    saveInfo = new SaveTextureInfo(file, tex, SaveTextureInfo.TYPE_PNG);
+                }
                 if (tex != writeTexture)
                 {
                     Object.DestroyImmediate(writeTexture);
@@ -95,16 +147,30 @@ namespace UTJ.FrameDebugSave
         {
             switch (tex.format)
             {
+                case RenderTextureFormat.ARGB2101010:
+                case RenderTextureFormat.ARGB64:
+                case RenderTextureFormat.ARGBFloat:
+                case RenderTextureFormat.ARGBHalf:
+                case RenderTextureFormat.DefaultHDR:
+                case RenderTextureFormat.RGB111110Float:
+                    return true;
             }
             return false;
         }
 
-        private bool ShouldSaveAsDepth(RenderTexture tex)
+        private static bool ShouldSaveAsDepth(RenderTexture tex)
         {
+            switch (tex.format)
+            {
+                case RenderTextureFormat.Depth:
+                    return true;
+                case RenderTextureFormat.Shadowmap:
+                    return true;
+            }
             return false;
         }
 
-        private bool ShouldSaveEXR(Texture2D tex)
+        private static bool ShouldSaveEXR(Texture2D tex)
         {
             switch(tex.format)
             {
@@ -114,7 +180,7 @@ namespace UTJ.FrameDebugSave
             }
             return false;
         }
-        private bool ShoudSaveRawData(Texture2D tex)
+        private static bool ShoudSaveRawData(Texture2D tex)
         {
             switch (tex.format)
             {

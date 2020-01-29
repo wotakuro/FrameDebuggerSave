@@ -403,34 +403,47 @@ namespace UTJ.FrameDebugSave
                     System.IO.Directory.CreateDirectory(dir);
                 }
                 if ( texture.GetType() == typeof(Texture2D))
-                {                
-                    // already saved texture
-                    if (alreadyWriteTextureDict.TryGetValue(texture.GetInstanceID(), out saveTextureInfo))
-                    {
-                        textureParam.saveTextureInfo = saveTextureInfo;
-                        continue;
-                    }
-                    path = System.IO.Path.Combine(dir, texture.name); ;
-                    saveTextureInfo = TextureUtility.SaveTexture((Texture2D)texture,path);
-                    alreadyWriteTextureDict.Add(texture.GetInstanceID(), saveTextureInfo);
+                {
+                    saveTextureInfo = SaveTexture2D((Texture2D) texture, dir);
                 }
                 if( texture.GetType() == typeof(RenderTexture))
                 {
-                    int renderTextureChangedIdx = -1;
-                    renderTextureLastChanged.TryGetValue(texture.GetInstanceID(), out renderTextureChangedIdx);
-                    SavedRenderTextureInfo savedRTInfo = new SavedRenderTextureInfo(texture.GetInstanceID(),renderTextureChangedIdx);
-                    // not saved
-                    if(!this.savedRenderTexture.TryGetValue(savedRTInfo,out saveTextureInfo))
-                    {
-                        path = System.IO.Path.Combine(dir, "RT_" + renderTextureChangedIdx + "_" + texture.name);
-                        saveTextureInfo = TextureUtility.SaveRenderTexture((RenderTexture)texture, path);
-                        savedRenderTexture.Add(savedRTInfo, saveTextureInfo);
-                    }
+                    saveTextureInfo = SaveRenderTexture((RenderTexture)texture, dir);
                 }
                 textureParam.saveTextureInfo = saveTextureInfo;
             }
         }
 
+        private TextureUtility.SaveTextureInfo SaveTexture2D(Texture2D texture,string dir)
+        {
+            TextureUtility.SaveTextureInfo saveTextureInfo = null;
+
+            // already saved texture
+            if (alreadyWriteTextureDict.TryGetValue(texture.GetInstanceID(), out saveTextureInfo))
+            {
+                return saveTextureInfo;
+            }
+            string path = System.IO.Path.Combine(dir, texture.name); ;
+            saveTextureInfo = TextureUtility.SaveTexture((Texture2D)texture, path);
+            alreadyWriteTextureDict.Add(texture.GetInstanceID(), saveTextureInfo);
+            return saveTextureInfo;
+        }
+        private TextureUtility.SaveTextureInfo SaveRenderTexture(RenderTexture texture, string dir)
+        {
+            TextureUtility.SaveTextureInfo saveTextureInfo = null;
+            int renderTextureChangedIdx = -1;
+            renderTextureLastChanged.TryGetValue(texture.GetInstanceID(), out renderTextureChangedIdx);
+            SavedRenderTextureInfo savedRTInfo = new SavedRenderTextureInfo(texture.GetInstanceID(), renderTextureChangedIdx);
+            // not saved
+            if (!this.savedRenderTexture.TryGetValue(savedRTInfo, out saveTextureInfo))
+            {
+                string path = System.IO.Path.Combine(dir, "RT_" + renderTextureChangedIdx + "_" + texture.name);
+                saveTextureInfo = TextureUtility.SaveRenderTexture((RenderTexture)texture, path);
+                savedRenderTexture.Add(savedRTInfo, saveTextureInfo);
+            }
+            return saveTextureInfo;
+
+        }
 
         private void ExecuteSaveScreenShot(FrameDebuggerEventData frameInfo,bool isFinalFrameEvent)
         {

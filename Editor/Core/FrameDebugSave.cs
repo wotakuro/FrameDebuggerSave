@@ -217,7 +217,22 @@ namespace UTJ.FrameDebugSave
                         jsonStringGenerator.AddObjectValue("name", textureParam.textureName);
                         if (val != null)
                         {
-                            jsonStringGenerator.AddObjectValue("format", val.graphicsFormat.ToString());
+                            jsonStringGenerator.AddObjectValue("originFormat", val.graphicsFormat.ToString());
+                            jsonStringGenerator.AddObjectValue("originWidth", val.width);
+                            jsonStringGenerator.AddObjectValue("originHeight", val.height);
+                            jsonStringGenerator.AddObjectValue("originMipCount", val.mipmapCount);
+                        }
+                        var saveInfo = textureParam.saveTextureInfo;
+                        if (saveInfo != null)
+                        {
+                            using (new JsonStringGenerator.ObjectScopeWithName(jsonStringGenerator, "saved")) {
+                                jsonStringGenerator.AddObjectValue("path", saveInfo.path);
+                                jsonStringGenerator.AddObjectValue("type", saveInfo.type);
+                                jsonStringGenerator.AddObjectValue("width", saveInfo.width);
+                                jsonStringGenerator.AddObjectValue("height", saveInfo.height);
+                                jsonStringGenerator.AddObjectValue("mipCount", saveInfo.mipCount);
+                                jsonStringGenerator.AddObjectValue("rawFormat", (int)saveInfo.rawFormat);
+                            }
                         }
                     }
                 }
