@@ -33,10 +33,7 @@ namespace UTJ.FrameDebugSave
                 {
                     lastDirIdx = p.LastIndexOf('/', fileNameIdx - 1);
                 }
-                if(lastDirIdx < 0)
-                {
-                    lastDirIdx = 0;
-                }
+                lastDirIdx += 1;
 
                 this.path = p.Substring(lastDirIdx);
                 if( t == TYPE_RAWDATA && tex.GetType() == typeof(Texture2D))

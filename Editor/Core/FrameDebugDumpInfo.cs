@@ -164,7 +164,6 @@ namespace UTJ.FrameDebugSave
         public static FrameDebugDumpInfo LoadFromFile(string path)
         {
             var str = File.ReadAllText(path);
-
             var info = JsonUtility.FromJson<FrameDebugDumpInfo>(str);
             return info;
         }
