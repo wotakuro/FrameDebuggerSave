@@ -26,7 +26,19 @@ namespace UTJ.FrameDebugSave
                 this.height = tex.height;
                 this.mipCount = tex.mipmapCount;
                 this.type = t;
-                this.path = System.IO.Path.GetFileName(p);
+                p = p.Replace('\\', '/');
+                int fileNameIdx = p.LastIndexOf('/');
+                int lastDirIdx = 0;
+                if (fileNameIdx > 0)
+                {
+                    lastDirIdx = p.LastIndexOf('/', fileNameIdx - 1);
+                }
+                if(lastDirIdx < 0)
+                {
+                    lastDirIdx = 0;
+                }
+
+                this.path = p.Substring(lastDirIdx);
                 if( t == TYPE_RAWDATA && tex.GetType() == typeof(Texture2D))
                 {
                     this.rawFormat = ((Texture2D)tex).format;
@@ -54,9 +66,9 @@ namespace UTJ.FrameDebugSave
             foreach (var rt in renderTextures)
             {
                 if (rt.width == info.rtWidth && rt.height == info.rtHeight &&
-                     rt.name == info.rtName)
+                     rt.name == info.rtName )
                 {
-                    if (target != null) { Debug.LogWarning("Already find renderTarget."); }
+                    if (target != null) { Debug.LogWarning("Already find renderTarget. " + info.rtName); }
                     target = rt;
                 }
             }

@@ -194,7 +194,7 @@ namespace UTJ.FrameDebugSave
 
         private void AppendShaderParam(JsonStringGenerator jsonStringGenerator, FrameInfoCrawler.ShaderProperties shaderParams)
         {
-            using (new JsonStringGenerator.ObjectScopeWithName(jsonStringGenerator, "params"))
+            using (new JsonStringGenerator.ObjectScopeWithName(jsonStringGenerator, "shaderParams"))
             {
                 AppendShaderParamTextures(jsonStringGenerator, shaderParams);
                 AppendShaderParamFloats(jsonStringGenerator, shaderParams);
@@ -214,7 +214,8 @@ namespace UTJ.FrameDebugSave
                     using (new JsonStringGenerator.ObjectScope(jsonStringGenerator))
                     {
                         var val = textureParam.value as Texture;
-                        jsonStringGenerator.AddObjectValue("name", textureParam.textureName);
+                        jsonStringGenerator.AddObjectValue("name", textureParam.name);
+                        jsonStringGenerator.AddObjectValue("textureName", textureParam.textureName);
                         if (val != null)
                         {
                             jsonStringGenerator.AddObjectValue("originFormat", val.graphicsFormat.ToString());
@@ -223,21 +224,26 @@ namespace UTJ.FrameDebugSave
                             jsonStringGenerator.AddObjectValue("originMipCount", val.mipmapCount);
                         }
                         var saveInfo = textureParam.saveTextureInfo;
-                        if (saveInfo != null)
-                        {
-                            using (new JsonStringGenerator.ObjectScopeWithName(jsonStringGenerator, "saved")) {
-                                jsonStringGenerator.AddObjectValue("path", saveInfo.path);
-                                jsonStringGenerator.AddObjectValue("type", saveInfo.type);
-                                jsonStringGenerator.AddObjectValue("width", saveInfo.width);
-                                jsonStringGenerator.AddObjectValue("height", saveInfo.height);
-                                jsonStringGenerator.AddObjectValue("mipCount", saveInfo.mipCount);
-                                jsonStringGenerator.AddObjectValue("rawFormat", (int)saveInfo.rawFormat);
-                            }
-                        }
+                        AppendSavedTextureInfo(jsonStringGenerator, "saved", saveInfo);
                     }
                 }
             }
         }
+        private void AppendSavedTextureInfo(JsonStringGenerator jsonStringGenerator,string objName , TextureUtility.SaveTextureInfo saveInfo)
+        {
+            if( saveInfo == null) { return; }
+            using (new JsonStringGenerator.ObjectScopeWithName(jsonStringGenerator, objName))
+            {
+                jsonStringGenerator.AddObjectValue("path", saveInfo.path);
+                jsonStringGenerator.AddObjectValue("type", saveInfo.type);
+                jsonStringGenerator.AddObjectValue("width", saveInfo.width);
+                jsonStringGenerator.AddObjectValue("height", saveInfo.height);
+                jsonStringGenerator.AddObjectValue("mipCount", saveInfo.mipCount);
+                jsonStringGenerator.AddObjectValue("rawFormat", saveInfo.rawFormat.ToString());
+            }
+
+        }
+
         private void AppendShaderParamFloats(JsonStringGenerator jsonStringGenerator, FrameInfoCrawler.ShaderProperties shaderParams)
         {
             if (shaderParams.convertedFloats == null) { return; }
@@ -248,7 +254,8 @@ namespace UTJ.FrameDebugSave
                 {
                     using (new JsonStringGenerator.ObjectScope(jsonStringGenerator))
                     {
-                        jsonStringGenerator.AddObjectValue(floatParam.name, (float)floatParam.value);
+                        jsonStringGenerator.AddObjectValue("name", floatParam.name);
+                        jsonStringGenerator.AddObjectValue("val", (float)floatParam.value);
                     }
                 }
             }
@@ -264,7 +271,8 @@ namespace UTJ.FrameDebugSave
                     using (new JsonStringGenerator.ObjectScope(jsonStringGenerator))
                     {
                         var val = (Vector4)vectorParam.value;
-                        jsonStringGenerator.AddObjectVector(vectorParam.name, ref val);
+                        jsonStringGenerator.AddObjectValue("name",vectorParam.name);
+                        jsonStringGenerator.AddObjectVector("val", ref val);
                     }
                 }
 
@@ -280,7 +288,8 @@ namespace UTJ.FrameDebugSave
                     using (new JsonStringGenerator.ObjectScope(jsonStringGenerator))
                     {
                         var val = (Matrix4x4)matrixParam.value;
-                        jsonStringGenerator.AddObjectMatrix(matrixParam.name, ref val);
+                        jsonStringGenerator.AddObjectValue("name",matrixParam.name);
+                        jsonStringGenerator.AddObjectMatrix("val", ref val);
                     }
                 }
             }
