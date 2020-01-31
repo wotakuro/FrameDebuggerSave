@@ -177,7 +177,10 @@ namespace UTJ.FrameDebugSave
             {
                 GetGameObjectName(parent.gameObject, sb);
             }
-            sb.Append('/');
+            if (sb.Length > 0)
+            {
+                sb.Append('/');
+            }
             sb.Append(gameObject.name);
         }
 

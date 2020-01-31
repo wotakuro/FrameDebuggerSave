@@ -20,6 +20,9 @@ namespace UTJ.FrameDebugSave
             [SerializeField]
             string type;
             [SerializeField]
+            SavedTextureInfo screenshot;
+
+            [SerializeField]
             FrameRenderingInfo rendering;
             [SerializeField]
             RenderTargetInfo renderTarget;
@@ -46,6 +49,8 @@ namespace UTJ.FrameDebugSave
             int meshSubset;
             [SerializeField]
             string batchBreakCauseStr;
+            [SerializeField]
+            string gameobject;
         }
 
         [System.Serializable]
@@ -164,6 +169,8 @@ namespace UTJ.FrameDebugSave
         public static FrameDebugDumpInfo LoadFromFile(string path)
         {
             var str = File.ReadAllText(path);
+            str = str.Replace("\"-Infinity\"", "-Infinity")
+                .Replace("\"Infinity\"", "Infinity").Replace("\"Nan\"","Nan");
             var info = JsonUtility.FromJson<FrameDebugDumpInfo>(str);
             return info;
         }
