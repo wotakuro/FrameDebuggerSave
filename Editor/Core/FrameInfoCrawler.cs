@@ -397,7 +397,6 @@ namespace UTJ.FrameDebugSave
 
                 // save texture
                 string dir = System.IO.Path.Combine(this.saveDirectory, "shaderTexture");
-                string path = null;
                 if (!System.IO.Directory.Exists(dir))
                 {
                     System.IO.Directory.CreateDirectory(dir);
@@ -485,7 +484,7 @@ namespace UTJ.FrameDebugSave
                     path = System.IO.Path.Combine(dir, "ss-" + frameInfo.frameEventIndex );
                 }
 
-                TextureUtility.SaveRenderTexture(renderTexture, path);                
+                frameInfo.savedScreenShotInfo = TextureUtility.SaveRenderTexture(renderTexture, path);                
             }
         }
         

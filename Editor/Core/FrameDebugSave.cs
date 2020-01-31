@@ -12,6 +12,7 @@ namespace UTJ.FrameDebugSave
         private FrameInfoCrawler crawler;
         private ReflectionCache reflectionCache;
         private FrameInfoCrawler.CaptureFlag captureFlag;
+        private StringBuilder stringBuilder = new StringBuilder();
 
 
         public void Execute(FrameInfoCrawler.CaptureFlag flag)
@@ -141,6 +142,7 @@ namespace UTJ.FrameDebugSave
             {
                 jsonStringGenerator.AddObjectValue("frameEventIndex",evtData.frameEventIndex);
                 jsonStringGenerator.AddObjectValue("type",evt.type.ToString());
+                AppendSavedTextureInfo(jsonStringGenerator, "screenshot",evtData.savedScreenShotInfo);
                 AppendRenderingInfo(jsonStringGenerator, evt, evtData);
                 AppendRenderTargetInfo(jsonStringGenerator, evtData);
                 AppendShaderInfo(jsonStringGenerator, evtData);
@@ -160,7 +162,23 @@ namespace UTJ.FrameDebugSave
                     AddObjectValue("meshInstanceID", evtData.meshInstanceID).
                     AddObjectValue("meshSubset", evtData.meshSubset).
                     AddObjectValue("batchBreakCauseStr", evtData.batchBreakCauseStr);
+                if(evt.gameObject)
+                {
+                    stringBuilder.Length = 0;
+                    GetGameObjectName(evt.gameObject, stringBuilder);
+                    jsonStringGenerator.AddObjectValue("gameobject", stringBuilder.ToString() );
+                }
             }
+        }
+        private void GetGameObjectName(GameObject gameObject,StringBuilder sb)
+        {
+            var parent = gameObject.transform.parent;
+            if( parent != null)
+            {
+                GetGameObjectName(parent.gameObject, sb);
+            }
+            sb.Append('/');
+            sb.Append(gameObject.name);
         }
 
         private void AppendRenderTargetInfo(JsonStringGenerator jsonStringGenerator,
