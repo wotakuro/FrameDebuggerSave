@@ -8,162 +8,162 @@ namespace UTJ.FrameDebugSave
     public class FrameDebugDumpInfo
     {
         [SerializeField]
-        private int captureFlag;
+        public int captureFlag;
         [SerializeField]
-        private FrameInfo[] frames;
+        public FrameEventInfo[] events;
 
         [System.Serializable]
-        public class FrameInfo
+        public class FrameEventInfo
         {
             [SerializeField]
-            int frameEventIndex;
+            public int frameEventIndex;
             [SerializeField]
-            string type;
+            public string type;
             [SerializeField]
-            SavedTextureInfo screenshot;
+            public SavedTextureInfo screenshot;
 
             [SerializeField]
-            FrameRenderingInfo rendering;
+            public FrameRenderingInfo rendering;
             [SerializeField]
-            RenderTargetInfo renderTarget;
+            public RenderTargetInfo renderTarget;
             [SerializeField]
-            ShaderInfo shaderInfo;
+            public ShaderInfo shaderInfo;
 
         }
         [System.Serializable]
         public class FrameRenderingInfo
         {
             [SerializeField]
-            int vertexCount;
+            public int vertexCount;
             [SerializeField]
-            int indexCount;
+            public int indexCount;
             [SerializeField]
-            int instanceCount;
+            public int instanceCount;
             [SerializeField]
-            int drawCallCount;
+            public int drawCallCount;
             [SerializeField]
-            int componentInstanceID;
+            public int componentInstanceID;
             [SerializeField]
-            int meshInstanceID;
+            public int meshInstanceID;
             [SerializeField]
-            int meshSubset;
+            public int meshSubset;
             [SerializeField]
-            string batchBreakCauseStr;
+            public string batchBreakCauseStr;
             [SerializeField]
-            string gameobject;
+            public string gameobject;
         }
 
         [System.Serializable]
         public class RenderTargetInfo
         {
             [SerializeField]
-            string rtName;
+            public string rtName;
             [SerializeField]
-            int rtWidth;
+            public int rtWidth;
             [SerializeField]
-            int rtHeight;
+            public int rtHeight;
             [SerializeField]
-            int rtCount;
+            public int rtCount;
             [SerializeField]
-            int rtHasDepthTexture;
+            public int rtHasDepthTexture;
         }
 
         [System.Serializable]
         public class ShaderInfo
         {
             [SerializeField]
-            string shaderName;
+            public string shaderName;
             [SerializeField]
-            int subShaderIndex;
+            public int subShaderIndex;
             [SerializeField]
-            int shaderPassIndex;
+            public int shaderPassIndex;
             [SerializeField]
-            string passName;
+            public string passName;
             [SerializeField]
-            string passLightMode;
+            public string passLightMode;
             [SerializeField]
-            string shaderKeywords;
+            public string shaderKeywords;
             [SerializeField]
-            ShaderParamInfo shaderParams;
+            public ShaderParamInfo shaderParams;
         }
 
         [System.Serializable]
         public class ShaderParamInfo
         {
             [SerializeField]
-            TextureParamInfo[] textures;
+            public TextureParamInfo[] textures;
             [SerializeField]
-            TextureParamInfo[] floats;
+            public FloatParamInfo[] floats;
             [SerializeField]
-            VectorParamInfo[] vectors;
+            public VectorParamInfo[] vectors;
             [SerializeField]
-            MatrixParamInfo[] matricies;
+            public MatrixParamInfo[] matricies;
             [SerializeField]
-            BufferParamInfo[] buffers;
+            public BufferParamInfo[] buffers;
         }
         [System.Serializable]
         public class TextureParamInfo
         {
             [SerializeField]
-            string name;
+            public string name;
             [SerializeField]
-            string textureName;
+            public string textureName;
             [SerializeField]
-            string originFormat;
+            public string originFormat;
             [SerializeField]
-            int originWidth;
+            public int originWidth;
             [SerializeField]
-            int originHeight;
+            public int originHeight;
             [SerializeField]
-            int originMipCount;
+            public int originMipCount;
             [SerializeField]
-            SavedTextureInfo saved;
+            public SavedTextureInfo saved;
         }
         [System.Serializable]
         public class FloatParamInfo
         {
             [SerializeField]
-            string name;
+            public string name;
             [SerializeField]
-            float val;
+            public float val;
         }
         [System.Serializable]
         public class VectorParamInfo
         {
             [SerializeField]
-            string name;
+            public string name;
             [SerializeField]
-            float[] val;
+            public float[] val;
         }
         [System.Serializable]
         public class MatrixParamInfo
         {
             [SerializeField]
-            string name;
+            public string name;
             [SerializeField]
-            float[] val;
+            public float[] val;
         }
         [System.Serializable]
         public class BufferParamInfo
         {
             [SerializeField]
-            string name;
+            public string name;
         }
         [System.Serializable]
         public class SavedTextureInfo
         {
             [SerializeField]
-            string path;
+            public string path;
             [SerializeField]
-            string type;
+            public string type;
             [SerializeField]
-            string width;
+            public string width;
             [SerializeField]
-            string height;
+            public string height;
             [SerializeField]
-            int mipCount;
+            public int mipCount;
             [SerializeField]
-            int rawFormat;
+            public int rawFormat;
         }
 
         public static FrameDebugDumpInfo LoadFromFile(string path)

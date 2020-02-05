@@ -8,6 +8,8 @@ namespace UTJ.FrameDebugSave
 {
     public class FrameInfoCrawler
     {
+        public static readonly string RootSaveDir = "FrameDebugger";
+
         [System.Flags]
         public enum CaptureFlag
         {
@@ -84,8 +86,13 @@ namespace UTJ.FrameDebugSave
             public short rtHasDepthTexture;
 
             public int batchBreakCause;
-
             public object shaderProperties;
+
+            public object blendState;
+            public object rasterState;
+            public object depthState;
+            public object stencilState;
+            public int stencilRef;
 
             // non Serialized 
             public TextureUtility.SaveTextureInfo savedScreenShotInfo;
@@ -185,7 +192,7 @@ namespace UTJ.FrameDebugSave
             var dateString = string.Format("{0:D4}{1:D2}{2:D2}_{3:D2}{4:D2}{5:D2}_", date.Year, date.Month, date.Day, date.Hour, date.Minute, date.Second);
             var profilerName = ProfilerDriver.GetConnectionIdentifier(ProfilerDriver.connectedProfiler);
 
-            this.saveDirectory = "FrameDebugger/" + dateString + profilerName;
+            this.saveDirectory = RootSaveDir + "/" + dateString + profilerName;
             System.IO.Directory.CreateDirectory(saveDirectory);
 
             endCallback = callback;

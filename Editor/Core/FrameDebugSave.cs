@@ -13,15 +13,17 @@ namespace UTJ.FrameDebugSave
         private ReflectionCache reflectionCache;
         private FrameInfoCrawler.CaptureFlag captureFlag;
         private StringBuilder stringBuilder = new StringBuilder();
+        private System.Action OnEndAct;
 
 
-        public void Execute(FrameInfoCrawler.CaptureFlag flag)
+        public void Execute(FrameInfoCrawler.CaptureFlag flag,System.Action endCall = null)
         {
             this.captureFlag = flag;
             if ( this.reflectionCache == null)
             {
                 this.reflectionCache = new ReflectionCache();
             }
+            this.OnEndAct = endCall;
 
             var frameDebuggeUtil = reflectionCache.GetTypeObject("UnityEditorInternal.FrameDebuggerUtility");
 
@@ -47,6 +49,7 @@ namespace UTJ.FrameDebugSave
             SaveDetailJsonData(dirPath);
             EditorUtility.DisplayDialog("Saved", dirPath, "ok");
             crawler = null;
+            OnEndAct?.Invoke();
         }
 
         private void SaveFrameDebuggerEventsCsv(string dirPath)
@@ -116,7 +119,7 @@ namespace UTJ.FrameDebugSave
                 using (new JsonStringGenerator.ObjectScope(jsonStringGenerator))
                 {
                     jsonStringGenerator.AddObjectValue("captureFlag", (int)captureFlag);
-                    using (new JsonStringGenerator.ObjectArrayValueScope(jsonStringGenerator, "frames"))
+                    using (new JsonStringGenerator.ObjectArrayValueScope(jsonStringGenerator, "events"))
                     {
                         for (int i = 0; i < crawler.frameDebuggerEventDataList.Count; ++i)
                         {
