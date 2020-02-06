@@ -14,27 +14,6 @@
             <ui:Label text="Screenshot" name="ScreenShot" style="min-width: 100px; min-height: 100px;" />
             <ui:ScrollView>
                 <ui:Foldout text="ShaderParameters" name="ShaderParameters">
-                    <ui:Label text="Textures" name="TextureHeader" style="margin-left: 10px;" />
-                    <ui:VisualElement name="TextureValueTemplate" style="flex-direction: row; margin-left: 20px;">
-                        <ui:Label text="texture" name="name" style="left: 0; width: 200px;" />
-                        <ui:VisualElement name="val">
-                            <ui:Label text="float" name="texturename" />
-                            <ui:VisualElement name="texturebody" style="width: 100px; height: 100px;" />
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-                    <ui:Label text="Floats" name="FloatHeader" style="margin-left: 10px;" />
-                    <ui:VisualElement name="FloatValueTemplate" style="flex-direction: row; margin-left: 20px;">
-                        <ui:Label text="float" name="name" style="left: 0; width: 200px;" />
-                        <ui:Label text="float" name="val" />
-                    </ui:VisualElement>
-                    <ui:VisualElement name="MatrixValueTemplate" style="flex-direction: row; margin-left: 20px;">
-                        <ui:Label text="matrix" name="name" style="left: 0; width: 200px;" />
-                        <ui:Label text="Vector Vector Vector Vector" name="val" />
-                    </ui:VisualElement>
-                    <ui:VisualElement name="VectorValueTemplate" style="flex-direction: row; margin-left: 20px;">
-                        <ui:Label text="vector" name="name" style="left: 0; width: 200px;" />
-                        <ui:Label text="Vector" name="val" />
-                    </ui:VisualElement>
                 </ui:Foldout>
             </ui:ScrollView>
         </ui:VisualElement>

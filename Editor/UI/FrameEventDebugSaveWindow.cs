@@ -13,14 +13,13 @@ namespace UTJ.FrameDebugSave.UI
 
     public class FrameEventDebugSaveWindow : EditorWindow
     {
-        private FrameInfoCrawler.CaptureFlag captureFlag;
+        private static readonly string[] shaderParamTypes = { "Texture", "Float", "Vector", "Matrix" };
 
+        private FrameInfoCrawler.CaptureFlag captureFlag;
         private FameDebugSave frameDebugSave = new FameDebugSave();
 
-        private VisualElement textureParamElement;
-        private VisualElement floatParamElement;
-        private VisualElement vectorParamElement;
-        private VisualElement matrixParamElement;
+        private VisualTreeAsset shaderParamTemplate;
+        private string currentLoadPath;
 
 
         [MenuItem("Tools/FrameDebugSave")]
@@ -30,28 +29,16 @@ namespace UTJ.FrameDebugSave.UI
         }
         private void OnEnable()
         {
-            string path = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML/FrameEventsViewer.uxml";
-            var tree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(path);
+            string windowLayoutPath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML/FrameEventsViewer.uxml";
+            var tree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(windowLayoutPath);
             var visualElement = tree.CloneTree();
 
             this.rootVisualElement.Add(visualElement);
-            visualElement.Q<FrameEventListView>().Initialize();
-            this.InitShaderParamElements();
+
+            string shaderParamPath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML/ShaderParameterTemplate.uxml";
+            this.shaderParamTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(shaderParamPath);
 
             this.RefreshCaptures();
-        }
-
-        private void InitShaderParamElements()
-        {
-            this.textureParamElement = this.rootVisualElement.Q<VisualElement>("TextureValueTemplate");
-            this.floatParamElement = this.rootVisualElement.Q<VisualElement>("FloatValueTemplate");
-            this.vectorParamElement = this.rootVisualElement.Q<VisualElement>("VectorValueTemplate");
-            this.matrixParamElement = this.rootVisualElement.Q<VisualElement>("MatrixValueTemplate");
-            // remove from parent
-            this.textureParamElement.parent.Remove(this.textureParamElement);
-            this.floatParamElement.parent.Remove(this.floatParamElement);
-            this.vectorParamElement.parent.Remove(this.vectorParamElement);
-            this.matrixParamElement.parent.Remove(this.matrixParamElement);
         }
 
         private void OnFrameEventChange(FrameDebugDumpInfo.FrameEventInfo evtInfo)
@@ -64,32 +51,106 @@ namespace UTJ.FrameDebugSave.UI
             {
                 foreach (var textureParam in shaderParams.textures)
                 {
-                    var label = new Label(textureParam.name + " " + textureParam.textureName);
-                    parentElement.Add(label);
+                    var elem = CreateShaderParamVE(textureParam);
+                    parentElement.Add(elem);
                 }
             }
             if (shaderParams.floats != null)
             {
                 foreach (var floatParam in shaderParams.floats)
                 {
-                    var label = new Label(floatParam.name + " " + floatParam.val);
-                    parentElement.Add(label);
+                    var elem = CreateShaderParamVE(floatParam);
+                    parentElement.Add(elem);                    
                 }
             }
             if (shaderParams.vectors != null)
             {
                 foreach (var vectorParam in shaderParams.vectors)
                 {
-                    string str = vectorParam.name + " ";
-                    for(int i = 0; i < vectorParam.val.Length; ++i)
-                    {
-                        str += vectorParam.val[i] + ",";
-                    }
-                    var label = new Label(str);
-                    parentElement.Add(label);
+                    var elem = CreateShaderParamVE(vectorParam);
+                    parentElement.Add(elem);
                 }
             }
+            if (shaderParams.matricies != null)
+            {
+                foreach (var matrixParam in shaderParams.matricies)
+                {
+                    var elem = CreateShaderParamVE(matrixParam);
+                    parentElement.Add(elem);
+                }
+            }
+
+            var screenShotTex = FrameDebugDumpInfo.LoadTexture(this.currentLoadPath, evtInfo.screenshot);
+
+            this.rootVisualElement.Q<VisualElement>("ScreenShot").style.backgroundImage = screenShotTex;
         }
+        
+        private VisualElement CreateShaderParamVE(FrameDebugDumpInfo.TextureParamInfo textureParam)
+        {
+            var element = this.shaderParamTemplate.CloneTree();
+            var valElem = InitShaderParamValueElement(element, "Texture",textureParam.name);
+            var tex = FrameDebugDumpInfo.LoadTexture(this.currentLoadPath, textureParam.saved);
+            var texBody = valElem.Q<VisualElement>("texbody");
+            var info = valElem.Q<Label>("val");
+            if (tex != null)
+            {
+                texBody.style.backgroundImage = tex;
+            }
+            else
+            {
+                texBody.parent.Remove(texBody);
+            }
+            info.text = textureParam.textureName;
+            return element;
+        }
+
+        private VisualElement CreateShaderParamVE(FrameDebugDumpInfo.FloatParamInfo floatParam)
+        {
+            var element = this.shaderParamTemplate.CloneTree();
+            var valElem = InitShaderParamValueElement(element, "Float", floatParam.name);
+            valElem.Q<Label>("val").text = floatParam.val.ToString();
+            return element;
+        }
+        private VisualElement CreateShaderParamVE(FrameDebugDumpInfo.VectorParamInfo vectorParam)
+        {
+            var element = this.shaderParamTemplate.CloneTree();
+            var valElem = InitShaderParamValueElement(element, "Vector", vectorParam.name);
+            for( int i = 0; i < 4; ++i)
+            {
+                valElem.Q<Label>("val-"+i).text = vectorParam.val[i].ToString();
+            }
+            return element;
+        }
+        private VisualElement CreateShaderParamVE(FrameDebugDumpInfo.MatrixParamInfo matrixParam)
+        {
+            var element = this.shaderParamTemplate.CloneTree();
+            var valElem = InitShaderParamValueElement(element, "Matrix", matrixParam.name);
+            for (int i = 0; i < 16; ++i)
+            {
+                valElem.Q<Label>("val-" + i).text = matrixParam.val[i].ToString();
+            }
+            return element;
+        }
+
+        private VisualElement InitShaderParamValueElement(VisualElement elem,string typeStr,string name)
+        {
+            VisualElement retNode = null;
+            elem.Q<Label>("name").text = name;
+            foreach( var type in shaderParamTypes)
+            {
+                var currentVE = elem.Q<VisualElement>(type);
+                if ( type == typeStr)
+                {
+                    retNode = currentVE;
+                }
+                else
+                {
+                    currentVE.parent.Remove(currentVE);
+                }
+            }
+            return retNode;
+        }
+
 
         private void RemoveAllChildren(VisualElement elem)
         {
@@ -102,6 +163,8 @@ namespace UTJ.FrameDebugSave.UI
         private void LoadCaptureFile(string file)
         {
             string detail = file;
+            this.currentLoadPath = System.IO.Path.GetDirectoryName(file);
+
             var t = UTJ.FrameDebugSave.FrameDebugDumpInfo.LoadFromFile(detail);
             var eventListView = this.rootVisualElement.Q<FrameEventListView>();
             eventListView.OnChangedFrame = this.OnFrameEventChange;
@@ -139,14 +202,16 @@ namespace UTJ.FrameDebugSave.UI
         private List<string> GetCaptures()
         {
             List<string> captures = new List<string>();
+            if( !System.IO.Directory.Exists(FrameInfoCrawler.RootSaveDir))
+            {
+                return captures;
+            }
             var dirs = System.IO.Directory.GetDirectories(FrameInfoCrawler.RootSaveDir);
             foreach (var dir in dirs){
                 captures.Add(dir.Replace(FrameInfoCrawler.RootSaveDir, ""));
             }
             return captures;
         }
-
-
     }
 
     public class FrameEventListView : VisualElement
@@ -187,6 +252,8 @@ namespace UTJ.FrameDebugSave.UI
             public override void Init(VisualElement ve, IUxmlAttributes bag, CreationContext cc)
             {
                 base.Init(ve, bag, cc);
+                var view = ve as FrameEventListView;
+                if( view != null) { view.Initialize(); }
             }
         }
 
@@ -203,7 +270,7 @@ namespace UTJ.FrameDebugSave.UI
             }
         }
 
-        public void Initialize()
+        void Initialize()
         {
             scrollView = new ScrollView();
             this.Add(scrollView);

@@ -155,15 +155,36 @@ namespace UTJ.FrameDebugSave
             [SerializeField]
             public string path;
             [SerializeField]
-            public string type;
+            public int type;
             [SerializeField]
-            public string width;
+            public int width;
             [SerializeField]
-            public string height;
+            public int height;
             [SerializeField]
             public int mipCount;
             [SerializeField]
-            public int rawFormat;
+            public string rawFormat;
+        }
+
+        public static Texture2D LoadTexture(string basePath , SavedTextureInfo info)
+        {
+            var converted = Convert(info);
+            return TextureUtility.LoadTexture(basePath , converted) as Texture2D;
+        }
+
+        private static TextureUtility.SaveTextureInfo Convert(SavedTextureInfo info)
+        {
+            TextureFormat format = TextureFormat.R8;
+            foreach ( var val in System.Enum.GetValues(typeof(TextureFormat)))
+            {
+                if(val.ToString() == info.rawFormat){
+                    format = (TextureFormat)val;
+                    break;
+                }
+            }
+            TextureUtility.SaveTextureInfo convert = new TextureUtility.SaveTextureInfo(info.path,info.type,
+                info.width,info.height,format,info.mipCount);
+            return convert;
         }
 
         public static FrameDebugDumpInfo LoadFromFile(string path)

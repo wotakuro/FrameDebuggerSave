@@ -20,6 +20,17 @@ namespace UTJ.FrameDebugSave
             public TextureFormat rawFormat;
             public int mipCount;
 
+            public SaveTextureInfo(string p, int t, int w, int h, TextureFormat format, int mip)
+            {
+                this.path = p;
+                this.type = t;
+                this.width = w;
+                this.height = h;
+                this.rawFormat = format;
+                this.mipCount = mip;
+
+            }
+
             public SaveTextureInfo(string p,Texture tex,int t)
             {
                 this.width = tex.width;
@@ -220,6 +231,34 @@ namespace UTJ.FrameDebugSave
                     return true;
             }
             return false;
+        }
+
+        public static Texture LoadTexture(string basePath , SaveTextureInfo info)
+        {
+            if( info == null || info.path == null) {
+                return null;
+            }
+            string path = System.IO.Path.Combine(basePath,info.path);
+            byte[] data = System.IO.File.ReadAllBytes(path);
+            Texture2D tex = null;
+            switch (info.type)
+            {
+                case SaveTextureInfo.TYPE_PNG:
+                    tex = new Texture2D(info.width,info.height);
+                    ImageConversion.LoadImage(tex, data);
+                    break;
+                case SaveTextureInfo.TYPE_EXR:
+                    tex = new Texture2D(info.width, info.height, info.rawFormat, info.mipCount, false);
+                    ImageConversion.LoadImage(tex, data);
+                    break;
+                case SaveTextureInfo.TYPE_RAWDATA:
+                    tex = new Texture2D(info.width, info.height,info.rawFormat,info.mipCount,false);
+                    tex.LoadRawTextureData(data);
+                    tex.Apply();
+                    break;
+            }
+
+            return tex;
         }
     }
 }
