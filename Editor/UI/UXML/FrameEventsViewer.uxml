@@ -9,12 +9,19 @@
             <ui:Label text="Events" />
             <UTJ.FrameDebugSave.UI.FrameEventListView name="FrameEvents" />
         </ui:VisualElement>
-        <ui:VisualElement name="Detail">
+        <ui:VisualElement name="Detail" style="flex-shrink: 0; flex-grow: 1;">
             <ui:Label text="Label" />
-            <ui:Label text="Screenshot" name="ScreenShot" style="min-width: 100px; min-height: 100px;" />
-            <ui:ScrollView>
-                <ui:Foldout text="ShaderParameters" name="ShaderParameters">
-                </ui:Foldout>
+            <ui:Label text="Screenshot" />
+
+            <ui:VisualElement style="flex-direction: row; flex-shrink: 0;">
+              <ui:VisualElement name="ScreenShot" style="padding-left: 10px; width: 100px; height: 100px;" />
+              <ui:Foldout text="RenderTargetInfo" name="RenderTargetInfo" />
+            </ui:VisualElement>
+
+            <ui:ScrollView name="DetailScroll" style="flex-shrink: 1;">
+              <ui:Foldout text="RenderingInfo" name="RenderingInfo" />
+              <ui:Foldout text="ShaderInfo" name="ShaderInfo" />
+              <ui:Foldout text="ShaderParameters" name="ShaderParameters" />
             </ui:ScrollView>
         </ui:VisualElement>
     </ui:VisualElement>
