@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:uie="UnityEditor.Experimental.UIElements">
+    <ui:VisualElement style="flex-direction: row; margin-left: 10px; margin-top: 2px; margin-bottom: 2px;">
+        <Style src="FrameEventsViewer.uss" />
+        <ui:Label text="ParameterName" name="name" style="width: 200px;" />
+        <ui:VisualElement style="align-items: flex-start; flex-grow: 1;">
+          <ui:Label text="0.0" name="val" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

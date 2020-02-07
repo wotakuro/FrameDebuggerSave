@@ -242,7 +242,9 @@ namespace UTJ.FrameDebugSave
                         jsonStringGenerator.AddObjectValue("textureName", textureParam.textureName);
                         if (val != null)
                         {
+#if UNITY_2019_1_OR_NEWER || UNITY_2019_OR_NEWER
                             jsonStringGenerator.AddObjectValue("originFormat", val.graphicsFormat.ToString());
+#endif
                             jsonStringGenerator.AddObjectValue("originWidth", val.width);
                             jsonStringGenerator.AddObjectValue("originHeight", val.height);
                             jsonStringGenerator.AddObjectValue("originMipCount", TextureUtility.GetMipMapCount(val) );

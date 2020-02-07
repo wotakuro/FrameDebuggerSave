@@ -3,9 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-using UnityEngine.UIElements;
 using UTJ.FrameDebugSave;
+#if UNITY_2019_1_OR_NEWER || UNITY_2019_OR_NEWER
+using UnityEngine.UIElements;
 using UnityEditor.UIElements;
+#else
+using UnityEngine.Experimental.UIElements;
+using UnityEditor.Experimental.UIElements;
+#endif
 
 
 namespace UTJ.FrameDebugSave.UI
@@ -22,6 +27,42 @@ namespace UTJ.FrameDebugSave.UI
         private VisualTreeAsset namedValueParamTemplate;
         private TextureLoader textureLoader;
 
+#if !UNITY_2019_1_OR_NEWER && !UNITY_2019_OR_NEWER
+        private VisualElement rootVisualElement
+        {
+            get
+            {
+                return this.GetRootVisualContainer();
+            }
+        }
+
+        private float lastHeight = -1.0f;
+        private void SetupScrollViewHeight()
+        {
+            if (lastHeight == this.position.height)
+            {
+                return;
+            }
+
+            var captureItems = this.rootVisualElement.Q<ScrollView>("CaptureItems");
+            captureItems.style.height = this.position.height - 20;
+
+            var detailScroll = this.rootVisualElement.Q<ScrollView>("DetailScroll");
+            detailScroll.style.height = this.position.height - 200;
+
+            var eventListView = this.rootVisualElement.Q<FrameEventListView>();
+            if (eventListView != null)
+            {
+                eventListView.SetupScrollViewHeight(this.position.height);
+            }
+            lastHeight = this.position.height;
+        }
+        private void Update()
+        {
+            SetupScrollViewHeight();
+        }
+#endif
+
 
         [MenuItem("Tools/FrameDebugSave")]
         public static void Create()
@@ -30,16 +71,24 @@ namespace UTJ.FrameDebugSave.UI
         }
         private void OnEnable()
         {
+#if UNITY_2019_1_OR_NEWER || UNITY_2019_OR_NEWER
             string windowLayoutPath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML/FrameEventsViewer.uxml";
+            string shaderParamPath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML/ShaderParameterTemplate.uxml";
+            string namedValuePath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML/NamedValueTemplate.uxml";
+#else
+            string windowLayoutPath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML2018/FrameEventsViewer.uxml";
+            string shaderParamPath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML2018/ShaderParameterTemplate.uxml";
+            string namedValuePath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML2018/NamedValueTemplate.uxml";
+#endif
+
+
             var tree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(windowLayoutPath);
-            var visualElement = tree.CloneTree();
+            var visualElement = CloneTree(tree);
 
             this.rootVisualElement.Add(visualElement);
             this.textureLoader = new TextureLoader();
-            string shaderParamPath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML/ShaderParameterTemplate.uxml";
             this.shaderParamTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(shaderParamPath);
 
-            string namedValuePath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML/NamedValueTemplate.uxml";
             this.namedValueParamTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(namedValuePath);
 
             this.RefreshCaptures();
@@ -103,7 +152,7 @@ namespace UTJ.FrameDebugSave.UI
 
         private VisualElement CreateNameValueElement(string name,string val)
         {
-            var tree = namedValueParamTemplate.CloneTree();
+            var tree = CloneTree(namedValueParamTemplate);
             tree.Q<Label>("name").text = name;
             tree.Q<Label>("val").text = val;
             return tree;
@@ -152,7 +201,7 @@ namespace UTJ.FrameDebugSave.UI
 
         private VisualElement CreateShaderParamVE(FrameDebugDumpInfo.TextureParamInfo textureParam)
         {
-            var element = this.shaderParamTemplate.CloneTree();
+            var element = CloneTree(this.shaderParamTemplate);
             var valElem = InitShaderParamValueElement(element, "Texture",textureParam.name);
             var tex = textureLoader.LoadTexture(textureParam.saved);
             var texBody = valElem.Q<VisualElement>("texbody");
@@ -174,14 +223,14 @@ namespace UTJ.FrameDebugSave.UI
 
         private VisualElement CreateShaderParamVE(FrameDebugDumpInfo.FloatParamInfo floatParam)
         {
-            var element = this.shaderParamTemplate.CloneTree();
+            var element = CloneTree(this.shaderParamTemplate);
             var valElem = InitShaderParamValueElement(element, "Float", floatParam.name);
             valElem.Q<Label>("val").text = floatParam.val.ToString();
             return element;
         }
         private VisualElement CreateShaderParamVE(FrameDebugDumpInfo.VectorParamInfo vectorParam)
         {
-            var element = this.shaderParamTemplate.CloneTree();
+            var element = CloneTree(this.shaderParamTemplate);
             var valElem = InitShaderParamValueElement(element, "Vector", vectorParam.name);
             for( int i = 0; i < 4; ++i)
             {
@@ -191,7 +240,7 @@ namespace UTJ.FrameDebugSave.UI
         }
         private VisualElement CreateShaderParamVE(FrameDebugDumpInfo.MatrixParamInfo matrixParam)
         {
-            var element = this.shaderParamTemplate.CloneTree();
+            var element = CloneTree(this.shaderParamTemplate);
             var valElem = InitShaderParamValueElement(element, "Matrix", matrixParam.name);
             for (int i = 0; i < 16; ++i)
             {
@@ -279,6 +328,16 @@ namespace UTJ.FrameDebugSave.UI
                 captures.Add(dir.Replace(FrameInfoCrawler.RootSaveDir, ""));
             }
             return captures;
+        }
+
+        private static VisualElement CloneTree(VisualTreeAsset asset)
+        {
+#if UNITY_2019_1_OR_NEWER || UNITY_2019_OR_NEWER
+            return asset.CloneTree();
+#else
+            return asset.CloneTree(null);
+
+#endif
         }
     }
 

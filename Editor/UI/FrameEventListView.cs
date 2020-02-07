@@ -2,9 +2,15 @@
 using UnityEditor;
 
 using System.Collections.Generic;
-using UnityEngine.UIElements;
 using UTJ.FrameDebugSave;
+
+#if UNITY_2019_1_OR_NEWER || UNITY_2019_OR_NEWER
+using UnityEngine.UIElements;
 using UnityEditor.UIElements;
+#else
+using UnityEngine.Experimental.UIElements;
+using UnityEditor.Experimental.UIElements;
+#endif
 
 
 namespace UTJ.FrameDebugSave.UI
@@ -29,6 +35,13 @@ namespace UTJ.FrameDebugSave.UI
         {
             set; get;
         }
+#if !UNITY_2019_1_OR_NEWER && !UNITY_2019_OR_NEWER
+
+        public void SetupScrollViewHeight(float height)
+        {
+            this.scrollView.style.height = height - 20;
+        }
+#endif
 
 
         // UXMLからオブジェクトを生成するためのファクトリー
@@ -78,7 +91,10 @@ namespace UTJ.FrameDebugSave.UI
             foreach (var info in infos)
             {
                 var label = new Label(info.frameEventIndex.ToString() + " " + info.type);
+#if UNITY_2019_1_OR_NEWER || UNITY_2019_OR_NEWER
                 label.focusable = true;
+#else
+#endif
                 label.RegisterCallback<MouseDownEvent>((evt) =>
                 {
                     SetCurrentFrameEvent(label);

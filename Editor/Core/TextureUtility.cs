@@ -213,6 +213,7 @@ namespace UTJ.FrameDebugSave
                 case TextureFormat.DXT5:
                 case TextureFormat.DXT5Crunched:
                     return true;
+#if UNITY_2019_1_OR_NEWER || UNITY_2019_OR_NEWER
                 case TextureFormat.ASTC_4x4:
                 case TextureFormat.ASTC_5x5:
                 case TextureFormat.ASTC_6x6:
@@ -220,6 +221,7 @@ namespace UTJ.FrameDebugSave
                 case TextureFormat.ASTC_10x10:
                 case TextureFormat.ASTC_12x12:
                     return true;
+#endif
                 case TextureFormat.BC4:
                 case TextureFormat.BC5:
                 case TextureFormat.BC6H:
