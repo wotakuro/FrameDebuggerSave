@@ -19,7 +19,8 @@ namespace UTJ.FrameDebugSave.UI
         private FameDebugSave frameDebugSave = new FameDebugSave();
 
         private VisualTreeAsset shaderParamTemplate;
-        private string currentLoadPath;
+        private VisualTreeAsset namedValueParamTemplate;
+        private TextureLoader textureLoader;
 
 
         [MenuItem("Tools/FrameDebugSave")]
@@ -34,14 +35,81 @@ namespace UTJ.FrameDebugSave.UI
             var visualElement = tree.CloneTree();
 
             this.rootVisualElement.Add(visualElement);
-
+            this.textureLoader = new TextureLoader();
             string shaderParamPath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML/ShaderParameterTemplate.uxml";
             this.shaderParamTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(shaderParamPath);
+
+            string namedValuePath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML/NamedValueTemplate.uxml";
+            this.namedValueParamTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(namedValuePath);
 
             this.RefreshCaptures();
         }
 
         private void OnFrameEventChange(FrameDebugDumpInfo.FrameEventInfo evtInfo)
+        {
+            var screenShotTex = textureLoader.LoadTexture(evtInfo.screenshot);
+            this.rootVisualElement.Q<VisualElement>("ScreenShot").style.backgroundImage = screenShotTex;
+
+            ChangeRenderTargetInfo(evtInfo);
+            ChangeRenderInfo(evtInfo);
+            ChangeShaderInfo(evtInfo);
+            ChangeShaderParam(evtInfo);
+        }
+
+
+        private void ChangeRenderTargetInfo(FrameDebugDumpInfo.FrameEventInfo evtInfo)
+        {
+            var parentElement = this.rootVisualElement.Q<Foldout>("RenderTargetInfo");
+            RemoveAllChildren(parentElement);
+            var rtInfo = evtInfo.renderTarget;
+            parentElement.Add(CreateNameValueElement("RT Name", rtInfo.rtName));
+            parentElement.Add(CreateNameValueElement("Size", rtInfo.rtWidth + " X " + rtInfo.rtHeight));
+            parentElement.Add(CreateNameValueElement("Count", rtInfo.rtCount.ToString()));
+            parentElement.Add(CreateNameValueElement("Depth", (rtInfo.rtHasDepthTexture >0).ToString()));
+
+        }
+
+        private void ChangeRenderInfo(FrameDebugDumpInfo.FrameEventInfo evtInfo)
+        {
+            var parentElement = this.rootVisualElement.Q<Foldout>("RenderingInfo");
+            RemoveAllChildren(parentElement);
+            var renderInfo = evtInfo.rendering;
+
+
+            parentElement.Add(CreateNameValueElement("BreakReson", renderInfo.batchBreakCauseStr));
+            parentElement.Add(CreateNameValueElement("Vertex", renderInfo.vertexCount.ToString()));
+            parentElement.Add(CreateNameValueElement("Index", renderInfo.indexCount.ToString()));
+            parentElement.Add(CreateNameValueElement("DrawCount", renderInfo.drawCallCount.ToString()));
+            parentElement.Add(CreateNameValueElement("GameObject", renderInfo.gameobject));
+            parentElement.Add(CreateNameValueElement("ComponentId", renderInfo.componentInstanceID.ToString()));
+            parentElement.Add(CreateNameValueElement("MeshInstanceId", renderInfo.meshInstanceID.ToString()));
+            parentElement.Add(CreateNameValueElement("InstanceCount", renderInfo.instanceCount.ToString()));
+            parentElement.Add(CreateNameValueElement("MeshSubset", renderInfo.meshSubset.ToString()));
+
+
+        }
+        private void ChangeShaderInfo(FrameDebugDumpInfo.FrameEventInfo evtInfo)
+        {
+            var parentElement = this.rootVisualElement.Q<Foldout>("ShaderInfo");
+            var shaderInfo = evtInfo.shaderInfo;
+            RemoveAllChildren(parentElement);
+
+            parentElement.Add(CreateNameValueElement("ShaderName", shaderInfo.shaderName));
+            parentElement.Add(CreateNameValueElement("SubShader", shaderInfo.subShaderIndex.ToString()));
+            parentElement.Add(CreateNameValueElement("Keyword", shaderInfo.shaderKeywords));
+            parentElement.Add(CreateNameValueElement("Pass", shaderInfo.passName + "(" + shaderInfo.shaderPassIndex + ")"));
+            parentElement.Add(CreateNameValueElement("LightMode", shaderInfo.passLightMode));
+        }
+
+        private VisualElement CreateNameValueElement(string name,string val)
+        {
+            var tree = namedValueParamTemplate.CloneTree();
+            tree.Q<Label>("name").text = name;
+            tree.Q<Label>("val").text = val;
+            return tree;
+        }
+
+        private void ChangeShaderParam(FrameDebugDumpInfo.FrameEventInfo evtInfo)
         {
             var shaderParams = evtInfo.shaderInfo.shaderParams;
             var parentElement = this.rootVisualElement.Q<Foldout>("ShaderParameters");
@@ -60,7 +128,7 @@ namespace UTJ.FrameDebugSave.UI
                 foreach (var floatParam in shaderParams.floats)
                 {
                     var elem = CreateShaderParamVE(floatParam);
-                    parentElement.Add(elem);                    
+                    parentElement.Add(elem);
                 }
             }
             if (shaderParams.vectors != null)
@@ -80,17 +148,13 @@ namespace UTJ.FrameDebugSave.UI
                 }
             }
 
-            var screenShotTex = FrameDebugDumpInfo.LoadTexture(this.currentLoadPath, evtInfo.screenshot);
-
-            this.rootVisualElement.Q<VisualElement>("ScreenShot").style.backgroundImage = screenShotTex;
-            
         }
-        
+
         private VisualElement CreateShaderParamVE(FrameDebugDumpInfo.TextureParamInfo textureParam)
         {
             var element = this.shaderParamTemplate.CloneTree();
             var valElem = InitShaderParamValueElement(element, "Texture",textureParam.name);
-            var tex = FrameDebugDumpInfo.LoadTexture(this.currentLoadPath, textureParam.saved);
+            var tex = textureLoader.LoadTexture(textureParam.saved);
             var texBody = valElem.Q<VisualElement>("texbody");
             var info = valElem.Q<Label>("val");
             if (tex != null)
@@ -101,9 +165,10 @@ namespace UTJ.FrameDebugSave.UI
             {
                 texBody.parent.Remove(texBody);
             }
-            info.text = textureParam.textureName + "\n" + 
-                textureParam.originWidth + "X" + textureParam.originHeight + "(" + textureParam.originFormat + ")"+
-                "mipcount;" + textureParam.originMipCount;
+            info.text = textureParam.textureName + "\n" +
+                textureParam.originWidth + " X " + textureParam.originHeight + "\n" +
+                textureParam.originFormat + "\n" +
+                "mipcount:" + textureParam.originMipCount;
             return element;
         }
 
@@ -166,7 +231,7 @@ namespace UTJ.FrameDebugSave.UI
         private void LoadCaptureFile(string file)
         {
             string detail = file;
-            this.currentLoadPath = System.IO.Path.GetDirectoryName(file);
+            this.textureLoader.SetDirectory(System.IO.Path.GetDirectoryName(file));
 
             var t = UTJ.FrameDebugSave.FrameDebugDumpInfo.LoadFromFile(detail);
             var eventListView = this.rootVisualElement.Q<FrameEventListView>();
