@@ -35,7 +35,7 @@ namespace UTJ.FrameDebugSave
             {
                 this.width = tex.width;
                 this.height = tex.height;
-                this.mipCount = tex.mipmapCount;
+                this.mipCount = GetMipMapCount(tex);
                 this.type = t;
                 p = p.Replace('\\', '/');
                 int fileNameIdx = p.LastIndexOf('/');
@@ -241,24 +241,37 @@ namespace UTJ.FrameDebugSave
             string path = System.IO.Path.Combine(basePath,info.path);
             byte[] data = System.IO.File.ReadAllBytes(path);
             Texture2D tex = null;
+#if UNITY_2019_2_OR_NEWER
+            tex = new Texture2D(info.width, info.height, info.rawFormat, info.mipCount, false);
+#else
+            tex = new Texture2D(info.width, info.height, info.rawFormat, (info.mipCount > 0), false);
+#endif
             switch (info.type)
             {
                 case SaveTextureInfo.TYPE_PNG:
-                    tex = new Texture2D(info.width,info.height);
                     ImageConversion.LoadImage(tex, data);
                     break;
                 case SaveTextureInfo.TYPE_EXR:
-                    tex = new Texture2D(info.width, info.height, info.rawFormat, info.mipCount, false);
                     ImageConversion.LoadImage(tex, data);
                     break;
                 case SaveTextureInfo.TYPE_RAWDATA:
-                    tex = new Texture2D(info.width, info.height,info.rawFormat,info.mipCount,false);
                     tex.LoadRawTextureData(data);
                     tex.Apply();
                     break;
             }
 
             return tex;
+        }
+
+        public static int GetMipMapCount(Texture tex)
+        {
+#if UNITY_2019_2_OR_NEWER
+            return tex.mipmapCount;
+#else
+            Texture2D tex2d = tex as Texture2D;
+            if(tex2d == null){return 0;}
+            return tex2d.mipmapCount;
+#endif
         }
     }
 }

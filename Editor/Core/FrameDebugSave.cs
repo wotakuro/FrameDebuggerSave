@@ -245,7 +245,7 @@ namespace UTJ.FrameDebugSave
                             jsonStringGenerator.AddObjectValue("originFormat", val.graphicsFormat.ToString());
                             jsonStringGenerator.AddObjectValue("originWidth", val.width);
                             jsonStringGenerator.AddObjectValue("originHeight", val.height);
-                            jsonStringGenerator.AddObjectValue("originMipCount", val.mipmapCount);
+                            jsonStringGenerator.AddObjectValue("originMipCount", TextureUtility.GetMipMapCount(val) );
                         }
                         var saveInfo = textureParam.saveTextureInfo;
                         AppendSavedTextureInfo(jsonStringGenerator, "saved", saveInfo);
