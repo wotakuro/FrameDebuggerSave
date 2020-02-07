@@ -126,7 +126,11 @@ namespace UTJ.FrameDebugSave
                 }
                 else
                 {
+#if UNITY_2019_2_OR_NEWER
                     writeTexture = new Texture2D(tex.width, tex.height, tex.format, tex.mipmapCount, false);
+#else
+                    writeTexture = new Texture2D(tex.width, tex.height, tex.format, tex.mipmapCount > 0, false);
+#endif
                     Graphics.CopyTexture(tex, writeTexture);
                 }
                 if (ShoudSaveRawData(tex))
