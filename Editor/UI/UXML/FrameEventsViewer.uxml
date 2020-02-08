@@ -1,17 +1,21 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
     <ui:VisualElement style="flex-wrap: no-wrap; flex-direction: row;">
         <Style src="FrameEventsViewer.uss" />
+
         <ui:VisualElement name="Captures" style="width: 200px;">
             <ui:Label text="Captures" />
             <ui:ScrollView name="CaptureItems" />
         </ui:VisualElement>
+
         <ui:VisualElement name="FrameInfo" style="left: 0; width: 200px; max-width: 300px; min-width: 100px;">
             <ui:Label text="Events" />
             <UTJ.FrameDebugSave.UI.FrameEventListView name="FrameEvents" />
         </ui:VisualElement>
+      
         <ui:VisualElement name="Detail" style="flex-shrink: 0; flex-grow: 1;">
             <ui:Label text="Label" />
             <ui:Label text="Screenshot" />
+          <UTJ.FrameDebugSave.UI.TwoPaneSplitView fixed-pane-index="0" fixed-pane-initial-size="200" orientation="vertical">
 
             <ui:VisualElement style="flex-direction: row; flex-shrink: 0;">
               <ui:VisualElement name="ScreenShot" style="padding-left: 10px; width: 100px; height: 100px;" />
@@ -23,6 +27,7 @@
               <ui:Foldout text="ShaderInfo" name="ShaderInfo" />
               <ui:Foldout text="ShaderParameters" name="ShaderParameters" />
             </ui:ScrollView>
+          </UTJ.FrameDebugSave.UI.TwoPaneSplitView>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
