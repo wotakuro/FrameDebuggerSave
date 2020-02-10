@@ -72,13 +72,13 @@ namespace UTJ.FrameDebugSave.UI
         private void OnEnable()
         {
 #if UNITY_2019_1_OR_NEWER || UNITY_2019_OR_NEWER
-            string windowLayoutPath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML/FrameEventsViewer.uxml";
-            string shaderParamPath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML/ShaderParameterTemplate.uxml";
-            string namedValuePath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML/NamedValueTemplate.uxml";
+            string windowLayoutPath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML/FrameEventsViewer.uxml";
+            string shaderParamPath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML/ShaderParameterTemplate.uxml";
+            string namedValuePath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML/NamedValueTemplate.uxml";
 #else
-            string windowLayoutPath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML2018/FrameEventsViewer.uxml";
-            string shaderParamPath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML2018/ShaderParameterTemplate.uxml";
-            string namedValuePath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML2018/NamedValueTemplate.uxml";
+            string windowLayoutPath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML2018/FrameEventsViewer.uxml";
+            string shaderParamPath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML2018/ShaderParameterTemplate.uxml";
+            string namedValuePath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML2018/NamedValueTemplate.uxml";
 #endif
 
 
@@ -97,7 +97,7 @@ namespace UTJ.FrameDebugSave.UI
         private void OnFrameEventChange(FrameDebugDumpInfo.FrameEventInfo evtInfo)
         {
             var screenShotTex = textureLoader.LoadTexture(evtInfo.screenshot);
-            this.rootVisualElement.Q<VisualElement>("ScreenShot").style.backgroundImage = screenShotTex;
+            this.rootVisualElement.Q<ScalableImageView>("ScreenShot").SetTexture( screenShotTex );
 
             ChangeRenderTargetInfo(evtInfo);
             ChangeRenderInfo(evtInfo);
@@ -204,11 +204,11 @@ namespace UTJ.FrameDebugSave.UI
             var element = CloneTree(this.shaderParamTemplate);
             var valElem = InitShaderParamValueElement(element, "Texture",textureParam.name);
             var tex = textureLoader.LoadTexture(textureParam.saved);
-            var texBody = valElem.Q<VisualElement>("texbody");
+            var texBody = valElem.Q<ScalableImageView>("texbody");
             var info = valElem.Q<Label>("val");
             if (tex != null)
             {
-                texBody.style.backgroundImage = tex;
+                texBody.SetTexture(tex);
             }
             else
             {
@@ -329,6 +329,8 @@ namespace UTJ.FrameDebugSave.UI
             }
             return captures;
         }
+
+
 
         private static VisualElement CloneTree(VisualTreeAsset asset)
         {

@@ -5,7 +5,7 @@
         <ui:VisualElement style="align-items: flex-start; flex-grow: 1;">
             <ui:VisualElement name="Texture">
               <ui:Label text="textureinformation" name="val" />
-              <ui:VisualElement name="texbody" style="width: 150px; height: 150px;" />
+              <UTJ.FrameDebugSave.UI.ScalableImageView name="texbody" style="width: 150px; height: 150px;" />
             </ui:VisualElement>
             <ui:VisualElement name="Float">
                 <ui:Label class="shader-f-val" text="0.0" name="val" />

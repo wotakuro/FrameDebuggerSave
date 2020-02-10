@@ -23,6 +23,15 @@
   background-color:#000000;
 }
 
+.scalable-image-point{
+	cursor:resize-up-left;
+	position: absolute;
+	right: -5px;
+	bottom: -5px; 
+	width: 10px;
+	height:10px;
+}
+
 
 .unity-two-pane-split-view {
     flex-grow: 1;
