@@ -2,17 +2,17 @@
     <ui:VisualElement style="flex-wrap: no-wrap; flex-direction: row;">
         <Style src="FrameEventsViewer.uss" />
 
-        <ui:VisualElement name="Captures" style="width: 200px;">
+        <ui:VisualElement name="Captures" style="width: 200px; min-width: 200px;">
             <ui:Label text="Captures" />
             <ui:ScrollView name="CaptureItems" />
         </ui:VisualElement>
 
-        <ui:VisualElement name="FrameInfo" style="left: 0; width: 200px; max-width: 300px; min-width: 100px;">
+        <ui:VisualElement name="FrameInfo" style="left: 0; width: 200px; min-width: 200px;">
             <ui:Label text="Events" />
             <UTJ.FrameDebugSave.UI.FrameEventListView name="FrameEvents" />
         </ui:VisualElement>
       
-        <ui:VisualElement name="Detail" style="flex-shrink: 0; flex-grow: 1;">
+        <ui:VisualElement name="Detail" style="flex-shrink: 0; flex-grow: 1;  min-width: 200px;">
             <ui:Label text="Label" />
             <ui:Label text="Screenshot" />
 

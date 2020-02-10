@@ -468,7 +468,7 @@ namespace UTJ.FrameDebugSave
             {
                 renderTexture = TextureUtility.GetTargetRenderTexture(frameInfo);
             }
-            else
+            if(renderTexture == null)
             {
                 renderTexture = TextureUtility.GetGameViewRT();
             }
@@ -490,7 +490,6 @@ namespace UTJ.FrameDebugSave
                 {
                     path = System.IO.Path.Combine(dir, "ss-" + frameInfo.frameEventIndex );
                 }
-
                 frameInfo.savedScreenShotInfo = TextureUtility.SaveRenderTexture(renderTexture, path);                
             }
         }

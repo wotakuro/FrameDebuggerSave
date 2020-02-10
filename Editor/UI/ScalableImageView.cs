@@ -26,10 +26,6 @@ namespace UTJ.FrameDebugSave.UI
         public new class UxmlFactory : UxmlFactory<ScalableImageView, UxmlTraits> { }
         public new class UxmlTraits : VisualElement.UxmlTraits
         {
-            //ここで独自のAttributeを指定します
-            UxmlStringAttributeDescription assetPathAttr =
-                new UxmlStringAttributeDescription { name = "assetPath" };
-
             // 子要素を持つかどうか
             public override IEnumerable<UxmlChildElementDescription> uxmlChildElementsDescription
             {
@@ -96,7 +92,7 @@ namespace UTJ.FrameDebugSave.UI
                 retVal.x = size.x / widthParam;
                 retVal.y = size.y / widthParam;
             }
-            if (heightParam > 1.0f && widthParam >= heightParam)
+            else if (heightParam > 1.0f && widthParam <= heightParam)
             {
                 retVal.x = size.x / heightParam;
                 retVal.y = size.y / heightParam;
@@ -109,6 +105,9 @@ namespace UTJ.FrameDebugSave.UI
             if (expand.x != 0 && expand.y != 0)
             {
                 retVal += expand;
+                retVal.x = Mathf.Max(retVal.x, 1);
+                retVal.y = Mathf.Max(retVal.y, 1);
+
                 widthParam = retVal.x / maxWidth;
                 heightParam = retVal.y / maxHeight;
                 if (widthParam > heightParam)
@@ -119,9 +118,9 @@ namespace UTJ.FrameDebugSave.UI
                 {
                     retVal.x = retVal.y * maxWidth / maxHeight;
                 }
-
+                retVal.x = Mathf.Min(retVal.x, maxWidth);
+                retVal.y = Mathf.Min(retVal.y, maxHeight);
             }
-
             return retVal;
 
         }

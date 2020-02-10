@@ -80,6 +80,8 @@ namespace UTJ.FrameDebugSave.UI
             string shaderParamPath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML2018/ShaderParameterTemplate.uxml";
             string namedValuePath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML2018/NamedValueTemplate.uxml";
 #endif
+            
+            captureFlag = (FrameInfoCrawler.CaptureFlag)(-1);
 
 
             var tree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(windowLayoutPath);
