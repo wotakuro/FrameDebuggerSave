@@ -121,7 +121,7 @@ namespace UTJ.FrameDebugSave
             this.stringBuilder.Append('"');
             this.stringBuilder.Append(name);
             this.stringBuilder.Append("\":\"");
-            this.stringBuilder.Append(val);
+            this.stringBuilder.Append(val.Replace("\"","\\\""));
             this.stringBuilder.Append('"');
             return this;
         }
@@ -157,7 +157,6 @@ namespace UTJ.FrameDebugSave
         {
             ExecuteObjectNum();
             this.stringBuilder.Append('"');
-            this.stringBuilder.Append(val);
             this.stringBuilder.Append('"');
             return this;
         }
