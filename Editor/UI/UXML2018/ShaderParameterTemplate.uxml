@@ -1,47 +1,47 @@
 <ui:UXML xmlns:ui="UnityEngine.Experimental.UIElements" xmlns:uie="UnityEditor.Experimental.UIElements">
-    <ui:VisualElement style="flex-direction: row; margin-left: 10px; margin-top: 5px; margin-bottom: 5px;">
-        <Style src="FrameEventsViewer.uss" />
-        <ui:Label text="ParameterName" name="name" style="width: 200px;" />
-        <ui:VisualElement style="align-items: flex-start; flex-grow: 1;">
-            <ui:VisualElement name="Texture">
-              <ui:Label text="textureinformation" name="val" />
-              <ui:VisualElement name="texbody" style="width: 150px; height: 150px;" />
-            </ui:VisualElement>
-            <ui:VisualElement name="Float">
-                <ui:Label class="shader-f-val" text="0.0" name="val" />
-            </ui:VisualElement>
-            <ui:VisualElement name="Vector" style="flex-direction: row;">
-                <ui:Label class="shader-f-val" text="0.0" name="val-0" />
-                <ui:Label class="shader-f-val" text="0.0" name="val-1" />
-                <ui:Label class="shader-f-val" text="0.0" name="val-2" />
-                <ui:Label class="shader-f-val" text="0.0" name="val-3" />
-            </ui:VisualElement>
-            <ui:VisualElement name="Matrix" style="flex-direction: column;">
-                <ui:VisualElement style="flex-direction: row;">
-                    <ui:Label class="shader-f-val" text="0.0" name="val-0" />
-                    <ui:Label class="shader-f-val" text="0.0" name="val-1" />
-                    <ui:Label class="shader-f-val" text="0.0" name="val-2" />
-                    <ui:Label class="shader-f-val" text="0.0" name="val-3" />
-                </ui:VisualElement>
-                <ui:VisualElement style="flex-direction: row;">
-                    <ui:Label class="shader-f-val" text="0.0" name="val-4" />
-                    <ui:Label class="shader-f-val" text="0.0" name="val-5" />
-                    <ui:Label class="shader-f-val" text="0.0" name="val-6" />
-                    <ui:Label class="shader-f-val" text="0.0" name="val-7" />
-                </ui:VisualElement>
-                <ui:VisualElement style="flex-direction: row;">
-                    <ui:Label class="shader-f-val" text="0.0" name="val-8" />
-                    <ui:Label class="shader-f-val" text="0.0" name="val-9" />
-                    <ui:Label class="shader-f-val" text="0.0" name="val-10" />
-                    <ui:Label class="shader-f-val" text="0.0" name="val-11" />
-                </ui:VisualElement>
-                <ui:VisualElement style="flex-direction: row;">
-                    <ui:Label class="shader-f-val" text="0.0" name="val-12" />
-                    <ui:Label class="shader-f-val" text="0.0" name="val-13" />
-                    <ui:Label class="shader-f-val" text="0.0" name="val-14" />
-                    <ui:Label class="shader-f-val" text="0.0" name="val-15" />
-                </ui:VisualElement>
-            </ui:VisualElement>
+  <ui:VisualElement style="flex-direction: row; margin-left: 10px; margin-top: 5px; margin-bottom: 5px;">
+    <Style src="FrameEventsViewer.uss" />
+    <ui:Label text="ParameterName" name="name" style="width: 200px;" />
+    <ui:VisualElement style="align-items: flex-start; flex-grow: 1;">
+      <ui:VisualElement name="Texture">
+        <ui:Label text="textureinformation" name="val" />
+        <UTJ.FrameDebugSave.UI.ScalableImageView name="texbody" style="width: 150px; height: 150px;" />
+      </ui:VisualElement>
+      <ui:VisualElement name="Float">
+        <ui:Label class="shader-f-val" text="0.0" name="val" />
+      </ui:VisualElement>
+      <ui:VisualElement name="Vector" style="flex-direction: row;">
+        <ui:Label class="shader-f-val" text="0.0" name="val-0" />
+        <ui:Label class="shader-f-val" text="0.0" name="val-1" />
+        <ui:Label class="shader-f-val" text="0.0" name="val-2" />
+        <ui:Label class="shader-f-val" text="0.0" name="val-3" />
+      </ui:VisualElement>
+      <ui:VisualElement name="Matrix" style="flex-direction: column;">
+        <ui:VisualElement style="flex-direction: row;">
+          <ui:Label class="shader-f-val" text="0.0" name="val-0" />
+          <ui:Label class="shader-f-val" text="0.0" name="val-1" />
+          <ui:Label class="shader-f-val" text="0.0" name="val-2" />
+          <ui:Label class="shader-f-val" text="0.0" name="val-3" />
         </ui:VisualElement>
+        <ui:VisualElement style="flex-direction: row;">
+          <ui:Label class="shader-f-val" text="0.0" name="val-4" />
+          <ui:Label class="shader-f-val" text="0.0" name="val-5" />
+          <ui:Label class="shader-f-val" text="0.0" name="val-6" />
+          <ui:Label class="shader-f-val" text="0.0" name="val-7" />
+        </ui:VisualElement>
+        <ui:VisualElement style="flex-direction: row;">
+          <ui:Label class="shader-f-val" text="0.0" name="val-8" />
+          <ui:Label class="shader-f-val" text="0.0" name="val-9" />
+          <ui:Label class="shader-f-val" text="0.0" name="val-10" />
+          <ui:Label class="shader-f-val" text="0.0" name="val-11" />
+        </ui:VisualElement>
+        <ui:VisualElement style="flex-direction: row;">
+          <ui:Label class="shader-f-val" text="0.0" name="val-12" />
+          <ui:Label class="shader-f-val" text="0.0" name="val-13" />
+          <ui:Label class="shader-f-val" text="0.0" name="val-14" />
+          <ui:Label class="shader-f-val" text="0.0" name="val-15" />
+        </ui:VisualElement>
+      </ui:VisualElement>
     </ui:VisualElement>
+  </ui:VisualElement>
 </ui:UXML>
