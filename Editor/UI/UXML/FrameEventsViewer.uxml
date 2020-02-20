@@ -2,9 +2,24 @@
     <ui:VisualElement style="flex-wrap: no-wrap; flex-direction: row;">
         <Style src="FrameEventsViewer.uss" />
 
-        <ui:VisualElement name="Captures" style="width: 200px; min-width: 200px;">
-            <ui:Label text="Captures" />
-            <ui:ScrollView name="CaptureItems" />
+        <ui:VisualElement name="Captures" style="width: 240px; min-width: 240px;">
+          <!-- Shader Variant Collection -->
+          <ui:Label text="Add to ShaderVaiantCollection" />
+          <ui:VisualElement style="flex-direction: row; flex-shrink: 0;margin-left: 10px;margin-bottom: 10px;"
+                            tooltip="Add shader variants to the ShaderVariantCollection asset from saved capture datas.">
+              <uie:ObjectField name="VariantCollectionObject" style="width:150px;"/>
+              <ui:Button name="AddToCollectionBtn" text="Add" />
+            </ui:VisualElement>
+
+            <ui:Label text="New Captures" />
+            <ui:VisualElement style="flex-direction: row; flex-shrink: 0;margin-left: 10px;margin-bottom: 10px;"
+                            tooltip="Capture via FrameDebugger and save the information.">
+              <uie:EnumFlagsField name="CaptureFlag" value="None"  style="width:150px;"/>
+              <ui:Button name="CaptureBtn" text="capture" />
+            </ui:VisualElement>
+
+          <ui:Label text="Captures" />
+          <ui:ScrollView name="CaptureItems" style="margin-left: 10px;"/>
         </ui:VisualElement>
 
         <ui:VisualElement name="FrameInfo" style="left: 0; width: 200px; min-width: 200px;">

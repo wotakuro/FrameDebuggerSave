@@ -94,6 +94,8 @@ namespace UTJ.FrameDebugSave.UI
 
             this.namedValueParamTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(namedValuePath);
 
+            this.InitNewCaptureUI();
+            this.InitShaderVariantCollectionUI();
             this.RefreshCaptures();
         }
 
@@ -295,9 +297,10 @@ namespace UTJ.FrameDebugSave.UI
         {
             var captures = GetCaptures();
             var scrollView = this.rootVisualElement.Q<ScrollView>("CaptureItems");
-            scrollView.Clear();
-            scrollView.Add(new IMGUIContainer(OnGUINewCapture));
 
+
+            scrollView.Clear();
+            
             foreach (var capture in captures) {
                 var btn = new Button();
                 btn.text = capture;
@@ -308,16 +311,36 @@ namespace UTJ.FrameDebugSave.UI
              }
         }
 
-        private void OnGUINewCapture()
+        private void InitShaderVariantCollectionUI()
         {
-            captureFlag = (FrameInfoCrawler.CaptureFlag)EditorGUILayout.EnumFlagsField( captureFlag);
-            if (GUILayout.Button("new Capture"))
+            var objectField = this.rootVisualElement.Q<ObjectField>("VariantCollectionObject");
+            objectField.objectType = typeof(ShaderVariantCollection);
+            objectField.RegisterValueChangedCallback((obj) =>
             {
-                frameDebugSave.Execute(this.captureFlag,this.RefreshCaptures);
-            }
-            GUILayout.Label("");
+//                obj.newValue;
+            });
 
+            var btn = this.rootVisualElement.Q<Button>("AddToVariant");
         }
+
+        private void InitNewCaptureUI()
+        {
+            var enumField = this.rootVisualElement.Q<EnumFlagsField>("CaptureFlag");
+            enumField.Init(this.captureFlag);
+            enumField.RegisterValueChangedCallback((val) =>
+            {
+                this.captureFlag = (FrameInfoCrawler.CaptureFlag)val.newValue;
+            });
+            var btn = this.rootVisualElement.Q<Button>("CaptureBtn");
+            btn.clickable.clicked += () =>
+            {
+                frameDebugSave.Execute(this.captureFlag, ()=> {
+                    EditorUtility.DisplayDialog("Saved", "Saved FrameDebugger Information", "ok");
+                    this.RefreshCaptures();
+                });
+            };
+        }
+        
 
         private List<string> GetCaptures()
         {

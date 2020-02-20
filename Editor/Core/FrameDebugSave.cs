@@ -47,7 +47,6 @@ namespace UTJ.FrameDebugSave
             // directory
             SaveFrameDebuggerEventsCsv(dirPath);
             SaveDetailJsonData(dirPath);
-            EditorUtility.DisplayDialog("Saved", dirPath, "ok");
             crawler = null;
             OnEndAct?.Invoke();
         }

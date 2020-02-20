@@ -11,7 +11,7 @@ namespace UTJ.FrameDebugSave
         public static readonly string RootSaveDir = "FrameDebugger";
 
         [System.Flags]
-        public enum CaptureFlag
+        public enum CaptureFlag:int
         {
             None = 0,
             FinalTexture = 1, // EditorOnly
