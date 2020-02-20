@@ -76,6 +76,7 @@ namespace UTJ.FrameDebugSave.UI
             string shaderParamPath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML/ShaderParameterTemplate.uxml";
             string namedValuePath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML/NamedValueTemplate.uxml";
 #else
+            lastHeight = -1.0f;
             string windowLayoutPath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML2018/FrameEventsViewer.uxml";
             string shaderParamPath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML2018/ShaderParameterTemplate.uxml";
             string namedValuePath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML2018/NamedValueTemplate.uxml";
