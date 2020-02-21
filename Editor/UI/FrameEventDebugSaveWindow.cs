@@ -383,13 +383,22 @@ namespace UTJ.FrameDebugSave.UI
         {
             if( this.currentVariantCollection == null)
             {
-//                EditorUtility.SaveFilePanelInProject()
+                var file = EditorUtility.SaveFilePanelInProject("Create ShaderVariant", "ShaderVariantCollection", "shadervariants","please set create shadervariants");
+                if( string.IsNullOrEmpty(file))
+                {
+                    return;
+                }
+                ShaderVariantCollection data = new ShaderVariantCollection();
+                ShaderVariantCollectionCreator.AddFromScannedData(data);
+                AssetDatabase.CreateAsset(data, file);
+                //                
+                EditorUtility.DisplayDialog("Complete", "create shader variant collection.", "ok");
                 return;
             }
             ShaderVariantCollectionCreator.AddFromScannedData(currentVariantCollection);
             EditorUtility.SetDirty(currentVariantCollection);
             AssetDatabase.SaveAssets();
-
+            EditorUtility.DisplayDialog("Complete", "Add shader variants to collection.", "ok");
         }
 
         private List<string> GetCaptures()
