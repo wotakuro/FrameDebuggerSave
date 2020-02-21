@@ -1,59 +1,119 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace UTJ.FrameDebugSave
 {
     public class ShaderVariantCollectionCreator
     {
 
+        private class ShaderDrawInfo
+        {
+            public string keywords;
+            public string passLightMode;
+
+            public ShaderDrawInfo(string kw,string lm)
+            {
+                this.keywords = kw;
+                this.passLightMode = lm;
+            }
+
+            public override int GetHashCode()
+            {
+                return keywords.GetHashCode() + passLightMode.GetHashCode();
+            }
+            public override bool Equals(object obj)
+            {
+                var target = obj as ShaderDrawInfo;
+                if( target == null) { return false; }
+                return (this.keywords == target.keywords && this.passLightMode == target.passLightMode);
+            }
+        }
+
         private class ShaderVariantInfo
         {
             private string shader;
-            private HashSet<string> keywordsList;
-            private Dictionary<string, string> keywordsPassLightMode;
+            private HashSet<ShaderDrawInfo> shaderDrawInfo;
 
             public ShaderVariantInfo(string sh)
             {
                 this.shader = sh;
-                this.keywordsList = new HashSet<string>();
-                this.keywordsPassLightMode = new Dictionary<string, string>();
+                this.shaderDrawInfo = new HashSet<ShaderDrawInfo>();
             }
-            public void AddKeywords(string keywords,string passLightMode)
+            public void AddKeywords(string keywords, string passLightMode)
             {
                 keywords = keywords.Trim();
-                if (!keywordsList.Contains(keywords))
+                var info = new ShaderDrawInfo(keywords, passLightMode);
+                if (!shaderDrawInfo.Contains(info))
                 {
-                    keywordsList.Add(keywords);
-                    keywordsPassLightMode.Add(keywords, passLightMode);
+                    shaderDrawInfo.Add(info);
                 }
             }
-            public List<ShaderVariantCollection.ShaderVariant> CreateShaderVariantList(UnityEngine.Rendering.PassType passType)
+            public List<ShaderVariantCollection.ShaderVariant> CreateShaderVariantList()
             {
                 List<ShaderVariantCollection.ShaderVariant> shaderVariants = new List<ShaderVariantCollection.ShaderVariant>();
                 var shaderInstance = Shader.Find(this.shader);
-                
 
-//                UnityEngine.Debug.Log(shaderInstance);
+
+                //                UnityEngine.Debug.Log(shaderInstance);
                 if (shaderInstance == null)
                 {
                     return shaderVariants;
                 }
-                foreach ( var keywords in keywordsList)
+                foreach (var info in shaderDrawInfo)
                 {
-                    if (string.IsNullOrEmpty(keywords)) { continue; }
-                    var keywordArray = keywords.Split(' ');
-                    if(keywordArray.Length <= 1) { continue; }
+                    if (string.IsNullOrEmpty(info.keywords)) { continue; }
+                    var keywordArray = info.keywords.Split(' ');
+                    if (keywordArray.Length <= 1) { continue; }
                     try
                     {
+                        var passType = GetPassType(info.passLightMode);
+//                        Debug.Log(info.passLightMode + "->" + passType);
                         ShaderVariantCollection.ShaderVariant variant = new ShaderVariantCollection.ShaderVariant(shaderInstance, passType, keywordArray);
                         shaderVariants.Add(variant);
-                    }catch(System.Exception e)
+                    } catch (System.Exception e)
                     {
                         Debug.LogError(e);
                     }
                 }
                 return shaderVariants;
+            }
+            private static PassType GetPassType(string str)
+            {
+                str = str.ToUpper();
+                switch (str)
+                {
+                    case "":
+                    case "ALWAYS":
+                        return PassType.Normal;
+                    case "VERTEX":
+                        return PassType.Vertex;
+                    case "VERTEXLM":
+                        return PassType.VertexLM;
+                    case "VERTEXLMRGBM":
+                        return PassType.VertexLMRGBM;
+                    case "FORWARDBASE":
+                        return PassType.ForwardBase;
+                    case "FORWARDADD":
+                        return PassType.ForwardAdd;
+                    case "PREPASSBASE":
+                        return PassType.LightPrePassBase;
+                    case "PREPASSFINAL":
+                        return PassType.LightPrePassFinal;
+                    case "SHADOWCASTER":
+                        return PassType.ShadowCaster;
+                    case "DEFERRED":
+                        return PassType.Deferred;
+                    case "META":
+                        return PassType.Meta;
+                    case "MOTIONVECTORS":
+                        return PassType.MotionVectors;
+                    case "SRPDEFAULTUNLIT":
+                        return PassType.ScriptableRenderPipelineDefaultUnlit;
+                }
+                //                PassType.ScriptableRenderPipelineDefaultUnlit
+                return PassType.ScriptableRenderPipeline;
             }
         }
 
@@ -81,7 +141,7 @@ namespace UTJ.FrameDebugSave
 
             foreach( var variantInfo in this.variantDict.Values)
             {
-                var list = variantInfo.CreateShaderVariantList(UnityEngine.Rendering.PassType.Normal);
+                var list = variantInfo.CreateShaderVariantList();
                 AddShaderVariantList(shaderVariantCollection, list);
             }
         }
