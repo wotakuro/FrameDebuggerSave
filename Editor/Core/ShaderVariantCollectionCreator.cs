@@ -29,8 +29,9 @@ namespace UTJ.FrameDebugSave
             {
                 List<ShaderVariantCollection.ShaderVariant> shaderVariants = new List<ShaderVariantCollection.ShaderVariant>();
                 var shaderInstance = Shader.Find(this.shader);
+                
 
-                UnityEngine.Debug.Log(shaderInstance);
+//                UnityEngine.Debug.Log(shaderInstance);
                 if (shaderInstance == null)
                 {
                     return shaderVariants;

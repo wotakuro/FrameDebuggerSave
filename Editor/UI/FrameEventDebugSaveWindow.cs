@@ -351,17 +351,13 @@ namespace UTJ.FrameDebugSave.UI
         {
             var objectField = this.rootVisualElement.Q<ObjectField>("VariantCollectionObject");
             objectField.objectType = typeof(ShaderVariantCollection);
-
-            objectField.RegisterCallback((obj) =>
-            {
-                //                obj.newValue;
-            });
+            
 
             objectField.RegisterValueChangedCallback((obj) =>
             {
-                currentVariantCollection = obj.newValue;
+                currentVariantCollection = obj.newValue as ShaderVariantCollection;
             });
-            var btn = this.rootVisualElement.Q<Button>("AddToVariant");
+            var btn = this.rootVisualElement.Q<Button>("AddToCollectionBtn");
             btn.clickable.clicked += ExecuteAddShaderVariantCollection;
         }
 
