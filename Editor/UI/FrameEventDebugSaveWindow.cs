@@ -385,6 +385,14 @@ namespace UTJ.FrameDebugSave.UI
 #endif
         private void ExecuteAddShaderVariantCollection()
         {
+            if( this.currentVariantCollection == null)
+            {
+//                EditorUtility.SaveFilePanelInProject()
+                return;
+            }
+            ShaderVariantCollectionCreator.AddFromScannedData(currentVariantCollection);
+            EditorUtility.SetDirty(currentVariantCollection);
+            AssetDatabase.SaveAssets();
 
         }
 

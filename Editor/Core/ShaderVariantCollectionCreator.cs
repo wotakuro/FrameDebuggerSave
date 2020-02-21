@@ -19,6 +19,7 @@ namespace UTJ.FrameDebugSave
             }
             public void AddKeywords(string keywords)
             {
+                keywords = keywords.Trim();
                 if (!keywordsList.Contains(keywords))
                 {
                     keywordsList.Add(keywords);
@@ -28,10 +29,20 @@ namespace UTJ.FrameDebugSave
             {
                 List<ShaderVariantCollection.ShaderVariant> shaderVariants = new List<ShaderVariantCollection.ShaderVariant>();
                 var shaderInstance = Shader.Find(this.shader);
-                foreach( var keywords in keywordsList)
+
+                UnityEngine.Debug.Log(shaderInstance);
+                if (shaderInstance == null)
                 {
+                    return shaderVariants;
+                }
+                foreach ( var keywords in keywordsList)
+                {
+                    if (string.IsNullOrEmpty(keywords)) { continue; }
                     var keywordArray = keywords.Split(' ');
+                    if(keywordArray.Length <= 1) { continue; }
                     ShaderVariantCollection.ShaderVariant variant = new ShaderVariantCollection.ShaderVariant(shaderInstance, passType, keywordArray);
+
+                    Debug.Log(shaderInstance + keywords);
                 }
                 return shaderVariants;
             }
@@ -40,7 +51,18 @@ namespace UTJ.FrameDebugSave
         private Dictionary<string, ShaderVariantInfo> variantDict;
 
 
-        public void AddToShaderVariantCollection(ShaderVariantCollection shaderVariantCollection)
+        public static void AddFromScannedData(ShaderVariantCollection shaderVariantCollection)
+        {
+            var obj = new ShaderVariantCollectionCreator();
+            obj.AddToShaderVariantCollection(shaderVariantCollection);
+        }
+
+        private ShaderVariantCollectionCreator()
+        {
+
+        }
+
+        private void AddToShaderVariantCollection(ShaderVariantCollection shaderVariantCollection)
         {
             CreateDictionary();
             AddShaderVariantFromDict(shaderVariantCollection);
@@ -59,9 +81,15 @@ namespace UTJ.FrameDebugSave
         {
             foreach (var variant in list)
             {
-                if (!shaderVariantCollection.Contains(variant))
+                try
                 {
-                    shaderVariantCollection.Add(variant);
+                    if (!shaderVariantCollection.Contains(variant))
+                    {
+                        shaderVariantCollection.Add(variant);
+                    }
+                }catch(System.Exception e)
+                {
+                    Debug.LogError(e);
                 }
             }
         }
@@ -78,7 +106,7 @@ namespace UTJ.FrameDebugSave
                     ExecuteDumpInfo(dumpInfo);
                 }catch(System.Exception e)
                 {
-                    Debug.LogError(e);
+                    Debug.LogError(file + e);
                 }
             }
         }
@@ -103,6 +131,7 @@ namespace UTJ.FrameDebugSave
             if(!variantDict.TryGetValue(shaderInfo.shaderName,out info))
             {
                 info = new ShaderVariantInfo(shaderInfo.shaderName);
+                variantDict.Add(info.shader, info);
             }
             info.AddKeywords(shaderInfo.shaderKeywords);
         }
