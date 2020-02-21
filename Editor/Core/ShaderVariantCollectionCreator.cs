@@ -41,9 +41,14 @@ namespace UTJ.FrameDebugSave
                     if (string.IsNullOrEmpty(keywords)) { continue; }
                     var keywordArray = keywords.Split(' ');
                     if(keywordArray.Length <= 1) { continue; }
-                    ShaderVariantCollection.ShaderVariant variant = new ShaderVariantCollection.ShaderVariant(shaderInstance, passType, keywordArray);
-
-                    Debug.Log(shaderInstance + keywords);
+                    try
+                    {
+                        ShaderVariantCollection.ShaderVariant variant = new ShaderVariantCollection.ShaderVariant(shaderInstance, passType, keywordArray);
+                        shaderVariants.Add(variant);
+                    }catch(System.Exception e)
+                    {
+                        Debug.LogError(e);
+                    }
                 }
                 return shaderVariants;
             }
