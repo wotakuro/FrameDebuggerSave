@@ -9,20 +9,23 @@ namespace UTJ.FrameDebugSave
 
         private class ShaderVariantInfo
         {
-            public string shader;
-            public HashSet<string> keywordsList;
+            private string shader;
+            private HashSet<string> keywordsList;
+            private Dictionary<string, string> keywordsPassLightMode;
 
             public ShaderVariantInfo(string sh)
             {
                 this.shader = sh;
                 this.keywordsList = new HashSet<string>();
+                this.keywordsPassLightMode = new Dictionary<string, string>();
             }
-            public void AddKeywords(string keywords)
+            public void AddKeywords(string keywords,string passLightMode)
             {
                 keywords = keywords.Trim();
                 if (!keywordsList.Contains(keywords))
                 {
                     keywordsList.Add(keywords);
+                    keywordsPassLightMode.Add(keywords, passLightMode);
                 }
             }
             public List<ShaderVariantCollection.ShaderVariant> CreateShaderVariantList(UnityEngine.Rendering.PassType passType)
@@ -137,9 +140,9 @@ namespace UTJ.FrameDebugSave
             if(!variantDict.TryGetValue(shaderInfo.shaderName,out info))
             {
                 info = new ShaderVariantInfo(shaderInfo.shaderName);
-                variantDict.Add(info.shader, info);
+                variantDict.Add(shaderInfo.shaderName, info);
             }
-            info.AddKeywords(shaderInfo.shaderKeywords);
+            info.AddKeywords(shaderInfo.shaderKeywords,shaderInfo.passLightMode);
         }
 
 
