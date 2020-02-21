@@ -27,6 +27,8 @@ namespace UTJ.FrameDebugSave.UI
         private VisualTreeAsset namedValueParamTemplate;
         private TextureLoader textureLoader;
 
+        private ShaderVariantCollection currentVariantCollection;
+
 #if !UNITY_2019_1_OR_NEWER && !UNITY_2019_OR_NEWER
         private VisualElement rootVisualElement
         {
@@ -45,10 +47,10 @@ namespace UTJ.FrameDebugSave.UI
             }
 
             var captureItems = this.rootVisualElement.Q<ScrollView>("CaptureItems");
-            captureItems.style.height = this.position.height - 20;
+            captureItems.style.height = this.position.height - 150;
 
             var detailScroll = this.rootVisualElement.Q<ScrollView>("DetailScroll");
-            detailScroll.style.height = this.position.height - 200;
+            detailScroll.style.height = this.position.height - 20;
 
             var eventListView = this.rootVisualElement.Q<FrameEventListView>();
             if (eventListView != null)
@@ -94,10 +96,17 @@ namespace UTJ.FrameDebugSave.UI
 
             this.namedValueParamTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(namedValuePath);
 
+#if !UNITY_2019_1_OR_NEWER && !UNITY_2019_OR_NEWER
+            InitIMGUIArea();
+#else
             this.InitNewCaptureUI();
             this.InitShaderVariantCollectionUI();
+#endif
             this.RefreshCaptures();
         }
+
+
+
 
         private void OnFrameEventChange(FrameDebugDumpInfo.FrameEventInfo evtInfo)
         {
@@ -310,17 +319,50 @@ namespace UTJ.FrameDebugSave.UI
                 scrollView.Add(btn);
              }
         }
+#if !UNITY_2019_1_OR_NEWER && !UNITY_2019_OR_NEWER
+
+        private void InitIMGUIArea()
+        {
+            var shaderVariant = this.rootVisualElement.Q<VisualElement>("ShaderVariantIMGUI");
+            var newCapture = this.rootVisualElement.Q<VisualElement>("NewCaptureIMGUI");
+
+            shaderVariant.Add(new IMGUIContainer(OnGUIShaderVariant));
+            newCapture.Add(new IMGUIContainer(OnGUINewCapture));
+        }
+        private void OnGUINewCapture()
+        {
+            captureFlag = (FrameInfoCrawler.CaptureFlag)EditorGUILayout.EnumFlagsField(captureFlag);
+            if (GUILayout.Button("capture"))
+            {
+                frameDebugSave.Execute(this.captureFlag, this.RefreshCaptures);
+            }
+        }
+        private void OnGUIShaderVariant()
+        {
+            this.currentVariantCollection = EditorGUILayout.ObjectField(this.currentVariantCollection, typeof(ShaderVariantCollection), false) as ShaderVariantCollection;
+            if (GUILayout.Button("Add"))
+            {
+                ExecuteAddShaderVariantCollection();
+            }
+        }
+#else
 
         private void InitShaderVariantCollectionUI()
         {
             var objectField = this.rootVisualElement.Q<ObjectField>("VariantCollectionObject");
             objectField.objectType = typeof(ShaderVariantCollection);
-            objectField.RegisterValueChangedCallback((obj) =>
+
+            objectField.RegisterCallback((obj) =>
             {
-//                obj.newValue;
+                //                obj.newValue;
             });
 
+            objectField.RegisterValueChangedCallback((obj) =>
+            {
+                currentVariantCollection = obj.newValue;
+            });
             var btn = this.rootVisualElement.Q<Button>("AddToVariant");
+            btn.clickable.clicked += ExecuteAddShaderVariantCollection;
         }
 
         private void InitNewCaptureUI()
@@ -340,7 +382,11 @@ namespace UTJ.FrameDebugSave.UI
                 });
             };
         }
-        
+#endif
+        private void ExecuteAddShaderVariantCollection()
+        {
+
+        }
 
         private List<string> GetCaptures()
         {
