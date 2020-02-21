@@ -86,6 +86,7 @@ namespace UTJ.FrameDebugSave.UI
         }
         public void SetItems(FrameDebugDumpInfo.FrameEventInfo[] infos)
         {
+            this.currentIdx = 0;
             this.uiDataBind = new List<UIPair>();
             this.scrollView.Clear();
             foreach (var info in infos)

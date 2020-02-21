@@ -27,6 +27,8 @@ namespace UTJ.FrameDebugSave.UI
         private VisualTreeAsset namedValueParamTemplate;
         private TextureLoader textureLoader;
 
+        private ShaderVariantCollection currentVariantCollection;
+
 #if !UNITY_2019_1_OR_NEWER && !UNITY_2019_OR_NEWER
         private VisualElement rootVisualElement
         {
@@ -45,10 +47,10 @@ namespace UTJ.FrameDebugSave.UI
             }
 
             var captureItems = this.rootVisualElement.Q<ScrollView>("CaptureItems");
-            captureItems.style.height = this.position.height - 20;
+            captureItems.style.height = this.position.height - 150;
 
             var detailScroll = this.rootVisualElement.Q<ScrollView>("DetailScroll");
-            detailScroll.style.height = this.position.height - 200;
+            detailScroll.style.height = this.position.height - 20;
 
             var eventListView = this.rootVisualElement.Q<FrameEventListView>();
             if (eventListView != null)
@@ -72,14 +74,17 @@ namespace UTJ.FrameDebugSave.UI
         private void OnEnable()
         {
 #if UNITY_2019_1_OR_NEWER || UNITY_2019_OR_NEWER
-            string windowLayoutPath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML/FrameEventsViewer.uxml";
-            string shaderParamPath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML/ShaderParameterTemplate.uxml";
-            string namedValuePath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML/NamedValueTemplate.uxml";
+            string windowLayoutPath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML/FrameEventsViewer.uxml";
+            string shaderParamPath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML/ShaderParameterTemplate.uxml";
+            string namedValuePath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML/NamedValueTemplate.uxml";
 #else
-            string windowLayoutPath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML2018/FrameEventsViewer.uxml";
-            string shaderParamPath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML2018/ShaderParameterTemplate.uxml";
-            string namedValuePath = "Packages/com.utj.framedebugger2csv/Editor/UI/UXML2018/NamedValueTemplate.uxml";
+            lastHeight = -1.0f;
+            string windowLayoutPath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML2018/FrameEventsViewer.uxml";
+            string shaderParamPath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML2018/ShaderParameterTemplate.uxml";
+            string namedValuePath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML2018/NamedValueTemplate.uxml";
 #endif
+            
+            captureFlag = (FrameInfoCrawler.CaptureFlag)(-1);
 
 
             var tree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(windowLayoutPath);
@@ -91,13 +96,22 @@ namespace UTJ.FrameDebugSave.UI
 
             this.namedValueParamTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(namedValuePath);
 
+#if !UNITY_2019_1_OR_NEWER && !UNITY_2019_OR_NEWER
+            InitIMGUIArea();
+#else
+            this.InitNewCaptureUI();
+            this.InitShaderVariantCollectionUI();
+#endif
             this.RefreshCaptures();
         }
+
+
+
 
         private void OnFrameEventChange(FrameDebugDumpInfo.FrameEventInfo evtInfo)
         {
             var screenShotTex = textureLoader.LoadTexture(evtInfo.screenshot);
-            this.rootVisualElement.Q<VisualElement>("ScreenShot").style.backgroundImage = screenShotTex;
+            this.rootVisualElement.Q<ScalableImageView>("ScreenShot").SetTexture( screenShotTex );
 
             ChangeRenderTargetInfo(evtInfo);
             ChangeRenderInfo(evtInfo);
@@ -204,11 +218,11 @@ namespace UTJ.FrameDebugSave.UI
             var element = CloneTree(this.shaderParamTemplate);
             var valElem = InitShaderParamValueElement(element, "Texture",textureParam.name);
             var tex = textureLoader.LoadTexture(textureParam.saved);
-            var texBody = valElem.Q<VisualElement>("texbody");
+            var texBody = valElem.Q<ScalableImageView>("texbody");
             var info = valElem.Q<Label>("val");
             if (tex != null)
             {
-                texBody.style.backgroundImage = tex;
+                texBody.SetTexture(tex);
             }
             else
             {
@@ -292,9 +306,10 @@ namespace UTJ.FrameDebugSave.UI
         {
             var captures = GetCaptures();
             var scrollView = this.rootVisualElement.Q<ScrollView>("CaptureItems");
-            scrollView.Clear();
-            scrollView.Add(new IMGUIContainer(OnGUINewCapture));
 
+
+            scrollView.Clear();
+            
             foreach (var capture in captures) {
                 var btn = new Button();
                 btn.text = capture;
@@ -304,16 +319,86 @@ namespace UTJ.FrameDebugSave.UI
                 scrollView.Add(btn);
              }
         }
+#if !UNITY_2019_1_OR_NEWER && !UNITY_2019_OR_NEWER
 
+        private void InitIMGUIArea()
+        {
+            var shaderVariant = this.rootVisualElement.Q<VisualElement>("ShaderVariantIMGUI");
+            var newCapture = this.rootVisualElement.Q<VisualElement>("NewCaptureIMGUI");
+
+            shaderVariant.Add(new IMGUIContainer(OnGUIShaderVariant));
+            newCapture.Add(new IMGUIContainer(OnGUINewCapture));
+        }
         private void OnGUINewCapture()
         {
-            captureFlag = (FrameInfoCrawler.CaptureFlag)EditorGUILayout.EnumFlagsField( captureFlag);
-            if (GUILayout.Button("new Capture"))
+            captureFlag = (FrameInfoCrawler.CaptureFlag)EditorGUILayout.EnumFlagsField(captureFlag);
+            if (GUILayout.Button("capture"))
             {
-                frameDebugSave.Execute(this.captureFlag,this.RefreshCaptures);
+                frameDebugSave.Execute(this.captureFlag, this.RefreshCaptures);
             }
-            GUILayout.Label("");
+        }
+        private void OnGUIShaderVariant()
+        {
+            this.currentVariantCollection = EditorGUILayout.ObjectField(this.currentVariantCollection, typeof(ShaderVariantCollection), false) as ShaderVariantCollection;
+            if (GUILayout.Button("Add"))
+            {
+                ExecuteAddShaderVariantCollection();
+            }
+        }
+#else
 
+        private void InitShaderVariantCollectionUI()
+        {
+            var objectField = this.rootVisualElement.Q<ObjectField>("VariantCollectionObject");
+            objectField.objectType = typeof(ShaderVariantCollection);
+            
+
+            objectField.RegisterValueChangedCallback((obj) =>
+            {
+                currentVariantCollection = obj.newValue as ShaderVariantCollection;
+            });
+            var btn = this.rootVisualElement.Q<Button>("AddToCollectionBtn");
+            btn.clickable.clicked += ExecuteAddShaderVariantCollection;
+        }
+
+        private void InitNewCaptureUI()
+        {
+            var enumField = this.rootVisualElement.Q<EnumFlagsField>("CaptureFlag");
+            enumField.Init(this.captureFlag);
+            enumField.RegisterValueChangedCallback((val) =>
+            {
+                this.captureFlag = (FrameInfoCrawler.CaptureFlag)val.newValue;
+            });
+            var btn = this.rootVisualElement.Q<Button>("CaptureBtn");
+            btn.clickable.clicked += () =>
+            {
+                frameDebugSave.Execute(this.captureFlag, ()=> {
+                    EditorUtility.DisplayDialog("Saved", "Saved FrameDebugger Information", "ok");
+                    this.RefreshCaptures();
+                });
+            };
+        }
+#endif
+        private void ExecuteAddShaderVariantCollection()
+        {
+            if( this.currentVariantCollection == null)
+            {
+                var file = EditorUtility.SaveFilePanelInProject("Create ShaderVariant", "ShaderVariantCollection", "shadervariants","please set create shadervariants");
+                if( string.IsNullOrEmpty(file))
+                {
+                    return;
+                }
+                ShaderVariantCollection data = new ShaderVariantCollection();
+                ShaderVariantCollectionCreator.AddFromScannedData(data);
+                AssetDatabase.CreateAsset(data, file);
+                //                
+                EditorUtility.DisplayDialog("Complete", "create shader variant collection.", "ok");
+                return;
+            }
+            ShaderVariantCollectionCreator.AddFromScannedData(currentVariantCollection);
+            EditorUtility.SetDirty(currentVariantCollection);
+            AssetDatabase.SaveAssets();
+            EditorUtility.DisplayDialog("Complete", "Add shader variants to collection.", "ok");
         }
 
         private List<string> GetCaptures()
@@ -329,6 +414,8 @@ namespace UTJ.FrameDebugSave.UI
             }
             return captures;
         }
+
+
 
         private static VisualElement CloneTree(VisualTreeAsset asset)
         {

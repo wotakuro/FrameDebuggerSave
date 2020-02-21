@@ -88,16 +88,17 @@ namespace UTJ.FrameDebugSave
             SaveTextureInfo saveInfo = null;
             try
             {
-                Texture2D tex = new Texture2D(renderTexture.width, renderTexture.height, TextureFormat.RGB24, false);
+                Texture2D tex = new Texture2D(renderTexture.width, renderTexture.height, GetTextureFormat(renderTexture), false);
                 RenderTexture.active = renderTexture;
                 tex.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
                 tex.Apply();
-                if (ShouldSaveEXR(tex) )
+
+                if (ShoudSaveRawData(tex))
                 {
-                    byte[] bytes = tex.EncodeToEXR();
-                    file += ".exr";
+                    byte[] bytes = tex.GetRawTextureData();
+                    file += ".raw";
                     System.IO.File.WriteAllBytes(file, bytes);
-                    saveInfo = new SaveTextureInfo(file, renderTexture, SaveTextureInfo.TYPE_EXR);
+                    saveInfo = new SaveTextureInfo(file, renderTexture, SaveTextureInfo.TYPE_RAWDATA);
                 }
                 else
                 {
@@ -140,13 +141,6 @@ namespace UTJ.FrameDebugSave
                     System.IO.File.WriteAllBytes(file, bytes);
                     saveInfo = new SaveTextureInfo(file, tex, SaveTextureInfo.TYPE_RAWDATA);
                 }
-                else if (ShouldSaveEXR(tex))
-                {
-                    byte[] bytes = writeTexture.EncodeToEXR();
-                    file += ".exr";
-                    System.IO.File.WriteAllBytes(file, bytes);
-                    saveInfo = new SaveTextureInfo(file, tex, SaveTextureInfo.TYPE_PNG);
-                }
                 else
                 {
                     byte[] bytes = writeTexture.EncodeToPNG();
@@ -167,19 +161,20 @@ namespace UTJ.FrameDebugSave
             return null;
         }
 
-        private bool ShouldSaveEXR(RenderTexture tex)
+        private static TextureFormat GetTextureFormat(RenderTexture tex)
         {
             switch (tex.format)
             {
                 case RenderTextureFormat.ARGB2101010:
                 case RenderTextureFormat.ARGB64:
                 case RenderTextureFormat.ARGBFloat:
+                    return TextureFormat.RGBAFloat;
                 case RenderTextureFormat.ARGBHalf:
                 case RenderTextureFormat.DefaultHDR:
                 case RenderTextureFormat.RGB111110Float:
-                    return true;
+                    return TextureFormat.RGBAHalf;
             }
-            return false;
+            return TextureFormat.RGBA32;
         }
 
         private static bool ShouldSaveAsDepth(RenderTexture tex)
@@ -194,16 +189,7 @@ namespace UTJ.FrameDebugSave
             return false;
         }
 
-        private static bool ShouldSaveEXR(Texture2D tex)
-        {
-            switch(tex.format)
-            {
-                case TextureFormat.RGBAFloat:
-                case TextureFormat.RGBAHalf:
-                    return true;
-            }
-            return false;
-        }
+ 
         private static bool ShoudSaveRawData(Texture2D tex)
         {
             switch (tex.format)
@@ -234,6 +220,15 @@ namespace UTJ.FrameDebugSave
                     return true;
                 case TextureFormat.ETC_RGB4:
                 case TextureFormat.ETC_RGB4Crunched:
+                    return true;
+
+                case TextureFormat.RFloat:
+                case TextureFormat.RGFloat:
+                case TextureFormat.RGB9e5Float:
+                case TextureFormat.RGBAFloat:
+                case TextureFormat.RHalf:
+                case TextureFormat.RGHalf:
+                case TextureFormat.RGBAHalf:
                     return true;
             }
             return false;
