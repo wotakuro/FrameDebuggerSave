@@ -6,5 +6,5 @@ Also this tool supports to generate ShaderVariantCollection assets from captured
 
 ![alt text](Documantation~/img/FrameDebuggerSave.png)
 
-[More information](Documantation~/README.md)
+[More information](Documantation~/README.md)<br />
 [日本語情報](Documantation~/README.ja.md)
