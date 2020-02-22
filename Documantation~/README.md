@@ -3,7 +3,7 @@
 ## About
 This tool arrows you to capture the information of "FrameDebugger" and view the information.<br />
 Also this tool supports to generate ShaderVariantCollection assets from captured data.<br />
-![alt text](/img/FrameDebuggerSave.png)
+![alt text](img/FrameDebuggerSave.png)
 
 
 
@@ -17,7 +17,7 @@ Windows Editor and Player connected by FrameDebugger<br/ >
 
 ## How to Use
 Select "Tools/FrameDebuggerSave" from Menu to lauch Window. <br/>
-![alt text](/img/FrameDebuggerLaunch.png)<br />
+![alt text](img/FrameDebuggerLaunch.png)<br />
 
 
 
