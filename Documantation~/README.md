@@ -1,10 +1,10 @@
 # FrameDebuggerSave
 
 ## About
-This tool arrows you to capture the information of "FrameDebugger" and view the information.
-Also this tool supports to generate ShaderVariantCollection assets from captured data.
+This tool arrows you to capture the information of "FrameDebugger" and view the information.<br />
+Also this tool supports to generate ShaderVariantCollection assets from captured data.<br />
+![alt text](/img/FrameDebuggerSave.png)
 
-![alt text](image/ReporterAb.png)
 
 
 ## Install
@@ -16,11 +16,20 @@ Windows Editor and Player connected by FrameDebugger<br/ >
 *Player mode doesn't supports to capture ShaderTexture and some futures.
 
 ## How to Use
-Select "Tools/FrameDebuggerSave" from Menu <br/>
-FrameDebuggerウィンドウが立ち上がり、勝手に走査してデータを収集します。<br/>
-収集した結果をファイルに自動書き出しを行います<br />
+Select "Tools/FrameDebuggerSave" from Menu to lauch Window. <br/>
+![alt text](/img/FrameDebuggerLaunch.png)<br />
 
-Profiler等で繋いでいる先の情報先から勝手に収集するようになっています。<br />
 
-プロジェクト直下に「FrameDebugger」というフォルダを作成し、CSVの書き出しを行います。<br />
-※今後、ShaderのパラメーターをJsonで書き出すなどを予定しているため、一つフォルダを掘っています。
+
+1.Add variants to ShaderVariantCollection from captured data<br/ >
+Push "Add" button and then adding ShaderVariantCollection from captured data.
+<br />
+2.Data capture via FrameDebugger<br />
+Push "Capture" button and then FrameDebugger will be launched and capture data via FrameDebugger. <br />
+
+You can choose capture the textures that is used by shader, Screenshots or not by Flag.<br />
+
+If the capture data will be fuge, you can reduce the datasize by switching flag.
+3.Captured data List<br />
+Click the data and then detail information will be appeared<br />
+
