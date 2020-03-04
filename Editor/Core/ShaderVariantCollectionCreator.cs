@@ -172,9 +172,8 @@ namespace UTJ.FrameDebugSave
         private EFlag variantFlags;
 
 
-        public static void AddFromScannedData(ShaderVariantCollection shaderVariantCollection)
+        public static void AddFromScannedData(ShaderVariantCollection shaderVariantCollection, EFlag flags)
         {
-            var flags = EFlag.Assets | EFlag.BuiltIn | EFlag.Packages;
             var obj = new ShaderVariantCollectionCreator(flags);
             obj.AddToShaderVariantCollection(shaderVariantCollection);
         }
