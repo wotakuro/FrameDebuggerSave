@@ -29,6 +29,8 @@ namespace UTJ.FrameDebugSave.UI
 
         private ShaderVariantCollection currentVariantCollection;
 
+        private ShaderVariantCollectionCreator.EFlag variantFlag;
+
 #if !UNITY_2019_1_OR_NEWER && !UNITY_2019_OR_NEWER
         private VisualElement rootVisualElement
         {
@@ -83,8 +85,8 @@ namespace UTJ.FrameDebugSave.UI
             string shaderParamPath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML2018/ShaderParameterTemplate.uxml";
             string namedValuePath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML2018/NamedValueTemplate.uxml";
 #endif
-            
-            captureFlag = (FrameInfoCrawler.CaptureFlag)(-1);
+            this.variantFlag = (ShaderVariantCollectionCreator.EFlag)(-1);
+            this.captureFlag = (FrameInfoCrawler.CaptureFlag)(-1);
 
 
             var tree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(windowLayoutPath);
@@ -340,6 +342,7 @@ namespace UTJ.FrameDebugSave.UI
         private void OnGUIShaderVariant()
         {
             this.currentVariantCollection = EditorGUILayout.ObjectField(this.currentVariantCollection, typeof(ShaderVariantCollection), false) as ShaderVariantCollection;
+            this.variantFlag = (ShaderVariantCollectionCreator.EFlag )EditorGUILayout.EnumFlagsField(this.variantFlag);
             if (GUILayout.Button("Add"))
             {
                 ExecuteAddShaderVariantCollection();
@@ -349,6 +352,13 @@ namespace UTJ.FrameDebugSave.UI
 
         private void InitShaderVariantCollectionUI()
         {
+            var enumField = this.rootVisualElement.Q<EnumFlagsField>("VariantFlag");
+            enumField.Init(this.variantFlag);
+            enumField.RegisterValueChangedCallback((val) =>
+            {
+                this.variantFlag = (ShaderVariantCollectionCreator.EFlag)val.newValue;
+            });
+
             var objectField = this.rootVisualElement.Q<ObjectField>("VariantCollectionObject");
             objectField.objectType = typeof(ShaderVariantCollection);
             
@@ -389,13 +399,13 @@ namespace UTJ.FrameDebugSave.UI
                     return;
                 }
                 ShaderVariantCollection data = new ShaderVariantCollection();
-                ShaderVariantCollectionCreator.AddFromScannedData(data);
+                ShaderVariantCollectionCreator.AddFromScannedData(data, variantFlag);
                 AssetDatabase.CreateAsset(data, file);
                 //                
                 EditorUtility.DisplayDialog("Complete", "create shader variant collection.", "ok");
                 return;
             }
-            ShaderVariantCollectionCreator.AddFromScannedData(currentVariantCollection);
+            ShaderVariantCollectionCreator.AddFromScannedData(currentVariantCollection, variantFlag);
             EditorUtility.SetDirty(currentVariantCollection);
             AssetDatabase.SaveAssets();
             EditorUtility.DisplayDialog("Complete", "Add shader variants to collection.", "ok");

@@ -5,9 +5,10 @@
         <ui:VisualElement name="Captures" style="width: 240px; min-width: 240px;">
           <!-- Shader Variant Collection -->
           <ui:Label text="Add to ShaderVaiantCollection" />
+          <uie:ObjectField name="VariantCollectionObject" style="width:180px;margin-left: 10px;"/>
           <ui:VisualElement style="flex-direction: row; flex-shrink: 0;margin-left: 10px;margin-bottom: 10px;"
                             tooltip="Add shader variants to the ShaderVariantCollection asset from saved capture datas.">
-              <uie:ObjectField name="VariantCollectionObject" style="width:150px;"/>
+              <uie:EnumFlagsField name="VariantFlag" value="None"  style="width:150px;"/>
               <ui:Button name="AddToCollectionBtn" text="Add" />
             </ui:VisualElement>
 
