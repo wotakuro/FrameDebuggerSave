@@ -352,6 +352,13 @@ namespace UTJ.FrameDebugSave.UI
 
         private void InitShaderVariantCollectionUI()
         {
+            var enumField = this.rootVisualElement.Q<EnumFlagsField>("VariantFlag");
+            enumField.Init(this.variantFlag);
+            enumField.RegisterValueChangedCallback((val) =>
+            {
+                this.variantFlag = (ShaderVariantCollectionCreator.EFlag)val.newValue;
+            });
+
             var objectField = this.rootVisualElement.Q<ObjectField>("VariantCollectionObject");
             objectField.objectType = typeof(ShaderVariantCollection);
             
