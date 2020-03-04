@@ -7,6 +7,7 @@ namespace UTJ.FrameDebugSave
 {
     public class ShaderVariantCollectionCreator
     {
+        
 
         private class ShaderDrawInfo
         {
@@ -59,13 +60,20 @@ namespace UTJ.FrameDebugSave
                 //                UnityEngine.Debug.Log(shaderInstance);
                 if (shaderInstance == null)
                 {
+                    Debug.LogError("Shader not found " + this.shader);
                     return shaderVariants;
                 }
                 foreach (var info in shaderDrawInfo)
                 {
-                    if (string.IsNullOrEmpty(info.keywords)) { continue; }
-                    var keywordArray = info.keywords.Split(' ');
-                    if (keywordArray.Length <= 1) { continue; }
+                    string[] keywordArray; 
+                    if(string.IsNullOrEmpty(info.keywords))
+                    {
+                        keywordArray = new string[] { "" };
+                    }
+                    else
+                    {
+                        keywordArray = info.keywords.Split(' ');
+                    }
                     try
                     {
                         var passType = GetPassType(info.passLightMode);
