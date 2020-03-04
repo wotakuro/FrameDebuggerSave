@@ -7,14 +7,21 @@ namespace UTJ.FrameDebugSave
 {
     public class ShaderVariantCollectionCreator
     {
-        
+        [System.Flags]
+        public enum EFlag : int
+        {
+            None = 0x00,
+            Assets = 0x01,
+            Packages = 0x02,
+            BuiltIn = 0x04,
+        }
 
         private class ShaderDrawInfo
         {
             public string keywords;
             public string passLightMode;
 
-            public ShaderDrawInfo(string kw,string lm)
+            public ShaderDrawInfo(string kw, string lm)
             {
                 this.keywords = kw;
                 this.passLightMode = lm;
@@ -27,7 +34,7 @@ namespace UTJ.FrameDebugSave
             public override bool Equals(object obj)
             {
                 var target = obj as ShaderDrawInfo;
-                if( target == null) { return false; }
+                if (target == null) { return false; }
                 return (this.keywords == target.keywords && this.passLightMode == target.passLightMode);
             }
         }
@@ -51,22 +58,26 @@ namespace UTJ.FrameDebugSave
                     shaderDrawInfo.Add(info);
                 }
             }
-            public List<ShaderVariantCollection.ShaderVariant> CreateShaderVariantList()
+
+            public List<ShaderVariantCollection.ShaderVariant> CreateShaderVariantList(EFlag flags)
             {
                 List<ShaderVariantCollection.ShaderVariant> shaderVariants = new List<ShaderVariantCollection.ShaderVariant>();
                 var shaderInstance = Shader.Find(this.shader);
 
-
-                //                UnityEngine.Debug.Log(shaderInstance);
                 if (shaderInstance == null)
                 {
                     Debug.LogError("Shader not found " + this.shader);
                     return shaderVariants;
                 }
+                if (!ShouldExecute(shaderInstance, flags))
+                {
+                    return shaderVariants;
+                }
+
                 foreach (var info in shaderDrawInfo)
                 {
-                    string[] keywordArray; 
-                    if(string.IsNullOrEmpty(info.keywords))
+                    string[] keywordArray;
+                    if (string.IsNullOrEmpty(info.keywords))
                     {
                         keywordArray = new string[] { "" };
                     }
@@ -77,7 +88,7 @@ namespace UTJ.FrameDebugSave
                     try
                     {
                         var passType = GetPassType(info.passLightMode);
-//                        Debug.Log(info.passLightMode + "->" + passType);
+                        //                        Debug.Log(info.passLightMode + "->" + passType);
                         ShaderVariantCollection.ShaderVariant variant = new ShaderVariantCollection.ShaderVariant(shaderInstance, passType, keywordArray);
                         shaderVariants.Add(variant);
                     } catch (System.Exception e)
@@ -86,6 +97,38 @@ namespace UTJ.FrameDebugSave
                     }
                 }
                 return shaderVariants;
+            }
+
+            private bool ShouldExecute(Shader shader, EFlag flags)
+            {
+                var path = UnityEditor.AssetDatabase.GetAssetPath(shader).ToLower();
+                bool isBuiltIn = false;
+                bool isPackage= false;
+
+                isBuiltIn = IsBuiltInShader(path);
+                if (flags.HasFlag(EFlag.BuiltIn) && isBuiltIn)
+                {
+                    return true;
+                }
+                isPackage = IsPackageShader(path);
+                if (flags.HasFlag(EFlag.Packages) && isPackage)
+                {
+                    return true;
+                }
+                if( flags.HasFlag(EFlag.Assets) && !isBuiltIn && !isPackage)
+                {
+                    return true;
+                }
+                return false;
+            }
+
+            private static bool IsBuiltInShader(string lowerPath)
+            {
+                return (lowerPath == "resources/unity_builtin_extra") || (lowerPath == "resources/unity_builtin");
+            }
+            private static bool IsPackageShader(string lowerPath)
+            {
+                return (lowerPath.StartsWith("packages/"));
             }
             private static PassType GetPassType(string str)
             {
@@ -126,17 +169,19 @@ namespace UTJ.FrameDebugSave
         }
 
         private Dictionary<string, ShaderVariantInfo> variantDict;
+        private EFlag variantFlags;
 
 
         public static void AddFromScannedData(ShaderVariantCollection shaderVariantCollection)
         {
-            var obj = new ShaderVariantCollectionCreator();
+            var flags = EFlag.Assets | EFlag.BuiltIn | EFlag.Packages;
+            var obj = new ShaderVariantCollectionCreator(flags);
             obj.AddToShaderVariantCollection(shaderVariantCollection);
         }
 
-        private ShaderVariantCollectionCreator()
+        private ShaderVariantCollectionCreator(EFlag flags)
         {
-
+            this.variantFlags = flags;
         }
 
         private void AddToShaderVariantCollection(ShaderVariantCollection shaderVariantCollection)
@@ -147,9 +192,9 @@ namespace UTJ.FrameDebugSave
 
         private void AddShaderVariantFromDict(ShaderVariantCollection shaderVariantCollection) {
 
-            foreach( var variantInfo in this.variantDict.Values)
+            foreach (var variantInfo in this.variantDict.Values)
             {
-                var list = variantInfo.CreateShaderVariantList();
+                var list = variantInfo.CreateShaderVariantList(this.variantFlags);
                 AddShaderVariantList(shaderVariantCollection, list);
             }
         }
@@ -164,7 +209,7 @@ namespace UTJ.FrameDebugSave
                     {
                         shaderVariantCollection.Add(variant);
                     }
-                }catch(System.Exception e)
+                } catch (System.Exception e)
                 {
                     Debug.LogError(e);
                 }
@@ -176,12 +221,12 @@ namespace UTJ.FrameDebugSave
             this.variantDict = new Dictionary<string, ShaderVariantInfo>();
             var files = GetFiles();
 
-            foreach( var file in files) {
+            foreach (var file in files) {
                 try
                 {
                     var dumpInfo = FrameDebugDumpInfo.LoadFromFile(file);
                     ExecuteDumpInfo(dumpInfo);
-                }catch(System.Exception e)
+                } catch (System.Exception e)
                 {
                     Debug.LogError(file + e);
                 }
@@ -191,26 +236,26 @@ namespace UTJ.FrameDebugSave
 
         private void ExecuteDumpInfo(FrameDebugDumpInfo dumpInfo)
         {
-            foreach(var eventInfo in dumpInfo.events)
+            foreach (var eventInfo in dumpInfo.events)
             {
                 ExecShaderInfo(eventInfo.shaderInfo);
             }
         }
-        
+
 
         private void ExecShaderInfo(FrameDebugDumpInfo.ShaderInfo shaderInfo)
         {
-            if(string.IsNullOrEmpty(shaderInfo.shaderName))
+            if (string.IsNullOrEmpty(shaderInfo.shaderName))
             {
                 return;
             }
             ShaderVariantInfo info;
-            if(!variantDict.TryGetValue(shaderInfo.shaderName,out info))
+            if (!variantDict.TryGetValue(shaderInfo.shaderName, out info))
             {
                 info = new ShaderVariantInfo(shaderInfo.shaderName);
                 variantDict.Add(shaderInfo.shaderName, info);
             }
-            info.AddKeywords(shaderInfo.shaderKeywords,shaderInfo.passLightMode);
+            info.AddKeywords(shaderInfo.shaderKeywords, shaderInfo.passLightMode);
         }
 
 
@@ -218,15 +263,22 @@ namespace UTJ.FrameDebugSave
         {
             var dirs = System.IO.Directory.GetDirectories(FrameInfoCrawler.RootSaveDir);
             List<string> list = new List<string>(dirs.Length);
-            foreach( var dir in dirs)
+            foreach (var dir in dirs)
             {
                 string path = System.IO.Path.Combine(dir, "detail.json");
-                if( System.IO.File.Exists(path))
+                if (System.IO.File.Exists(path))
                 {
                     list.Add(path);
                 }
             }
             return list;
+        }
+    }
+    public static class Extentions
+    {
+        public static bool HasFlag(this ShaderVariantCollectionCreator.EFlag src, ShaderVariantCollectionCreator.EFlag flag)
+        {
+            return ((src & flag) == flag);
         }
     }
 }
