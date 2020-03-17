@@ -42,7 +42,7 @@ namespace UTJ.FrameDebugSave
 
         public void Cancel(System.Action endCall = null)
         {
-            crawler.Cancel(CancelCrawler);
+            crawler?.Cancel(CancelCrawler);
         }
 
 
