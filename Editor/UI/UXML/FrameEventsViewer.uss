@@ -1,37 +1,34 @@
-.shader-f-val{
-  width:100px;
+.shader-f-val {
+    width: 100px;
 }
 
-.resize-vert{
-  cursor:resize-vertical;
-  height: 2px;
-  margin-top:2px;
-  margin-bottom:2px;
-  background-color:#000000;
+.resize-vert {
+    cursor: resize-vertical;
+    height: 2px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    background-color: rgb(0, 0, 0);
 }
 
-
-.resize-hori{
-  cursor:resize-horizontal;
-  width: 10px;
-  margin-left:2px;
-  margin-right:2px;
-
-  border-left-width:3px;
-  border-right-width:3px;
-  border-color:#333333;
-  background-color:#000000;
+.resize-hori {
+    cursor: resize-horizontal;
+    width: 10px;
+    margin-left: 2px;
+    margin-right: 2px;
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-color: rgb(51, 51, 51);
+    background-color: rgb(0, 0, 0);
 }
 
-.scalable-image-point{
-	cursor:resize-up-left;
-	position: absolute;
-	right: -5px;
-	bottom: -5px; 
-	width: 10px;
-	height:10px;
+.scalable-image-point {
+    cursor: resize-up-left;
+    position: absolute;
+    right: -5px;
+    bottom: -5px;
+    width: 10px;
+    height: 10px;
 }
-
 
 .unity-two-pane-split-view {
     flex-grow: 1;
@@ -69,16 +66,16 @@
 .unity-two-pane-split-view__dragline--horizontal {
     width: 10px;
     left: -5px;
-    top: 0px;
-    bottom: 0px;
+    top: 0;
+    bottom: 0;
     cursor: resize-horizontal;
 }
 
 .unity-two-pane-split-view__dragline--vertical {
     height: 10px;
     top: -5px;
-    left: 0px;
-    right: 0px;
+    left: 0;
+    right: 0;
     cursor: resize-vertical;
 }
 
@@ -93,12 +90,12 @@
 
 .unity-two-pane-split-view__dragline-anchor--horizontal {
     width: 1px;
-    top: 0px;
-    bottom: 0px;
+    top: 0;
+    bottom: 0;
 }
 
 .unity-two-pane-split-view__dragline-anchor--vertical {
     height: 1px;
-    left: 0px;
-    right: 0px;
+    left: 0;
+    right: 0;
 }

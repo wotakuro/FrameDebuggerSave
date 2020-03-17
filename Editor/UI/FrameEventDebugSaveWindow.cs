@@ -387,6 +387,14 @@ namespace UTJ.FrameDebugSave.UI
                     this.RefreshCaptures();
                 });
             };
+            var cancelbtn = this.rootVisualElement.Q<Button>("CancelBtn");
+            cancelbtn.clickable.clicked += () =>
+            {
+                frameDebugSave.Cancel(() => {
+                    EditorUtility.DisplayDialog("Canceled", "Canceled FrameDebugger Information", "ok", "Don Not Cancel");
+                    this.RefreshCaptures();
+                });
+            };
         }
 #endif
         private void ExecuteAddShaderVariantCollection()

@@ -133,6 +133,8 @@ namespace UTJ.FrameDebugSave
         {
             get;private set;
         }
+        private bool isCanceling = false;
+        private bool isCanceled = false;
 
 
 
@@ -143,6 +145,7 @@ namespace UTJ.FrameDebugSave
 
         private IEnumerator enumerator;
         private System.Action endCallback;
+        private System.Action cancelCallback;
 
         private ReflectionCache reflectionCache;
         private ReflectionType frameDebuggeUtil;
@@ -199,6 +202,16 @@ namespace UTJ.FrameDebugSave
             EditorApplication.update += Update;
         }
 
+        public void Cancel(System.Action callback)
+        {
+            if (!IsRunning) return;
+
+            cancelCallback = callback;
+            isCanceling = true;
+
+            System.IO.Directory.Delete(this.saveDirectory, true);
+        }
+
         public void CloseFrameDebuggerWindow()
         {
             frameDebuggerWindowObj.CallMethod<object>("Close", null);
@@ -213,8 +226,17 @@ namespace UTJ.FrameDebugSave
             bool result = enumerator.MoveNext();
             if(!result)
             {
-                endCallback();
+                if(!this.isCanceled)
+                {
+                    endCallback();
+                }
+                else
+                {
+                    cancelCallback();
+                }
                 this.IsRunning = false;
+                this.isCanceling = false;
+                this.isCanceled = false;
                 EditorApplication.update -= Update;
             }
         }
@@ -244,6 +266,12 @@ namespace UTJ.FrameDebugSave
 
             for ( int i = 0; i <= count; ++i)
             {
+                if(isCanceling)
+                {
+                    this.isCanceled = true;
+                    yield break;
+                }
+
                 yield return null;
                 this.frameDebuggerWindowObj.CallMethod<object>("ChangeFrameEventLimit",new object[] { i });
                 this.frameDebuggerWindowObj.CallMethod<object>("RepaintOnLimitChange",null);
@@ -392,6 +420,11 @@ namespace UTJ.FrameDebugSave
 
         private void ExecuteShaderTextureSave(FrameDebuggerEventData frameInfo)
         {
+            if (this.isCanceling)
+            {
+                return;
+            }
+
             if (!(this.captureFlag.HasFlag(CaptureFlag.ShaderTexture))){
                 return;
             }
@@ -422,6 +455,11 @@ namespace UTJ.FrameDebugSave
 
         private TextureUtility.SaveTextureInfo SaveTexture2D(Texture2D texture,string dir)
         {
+            if(this.isCanceling)
+            {
+                return null;
+            }
+
             TextureUtility.SaveTextureInfo saveTextureInfo = null;
 
             // already saved texture
@@ -436,6 +474,11 @@ namespace UTJ.FrameDebugSave
         }
         private TextureUtility.SaveTextureInfo SaveRenderTexture(RenderTexture texture, string dir)
         {
+            if(this.isCanceling)
+            {
+                return null;
+            }
+
             TextureUtility.SaveTextureInfo saveTextureInfo = null;
             int renderTextureChangedIdx = -1;
             renderTextureLastChanged.TryGetValue(texture.GetInstanceID(), out renderTextureChangedIdx);
@@ -453,6 +496,11 @@ namespace UTJ.FrameDebugSave
 
         private void ExecuteSaveScreenShot(FrameDebuggerEventData frameInfo,bool isFinalFrameEvent)
         {
+            if(this.isCanceling)
+            {
+                return;
+            }
+
             if( !(this.captureFlag.HasFlag(CaptureFlag.FinalTexture)) && 
                 !(this.captureFlag.HasFlag(CaptureFlag.ScreenShotBySteps))) {
                 return;

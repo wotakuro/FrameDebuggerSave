@@ -14,6 +14,8 @@ namespace UTJ.FrameDebugSave
         private FrameInfoCrawler.CaptureFlag captureFlag;
         private StringBuilder stringBuilder = new StringBuilder();
         private System.Action OnEndAct;
+        private System.Action OnCancelAct;
+        private bool cancelFlag;
 
 
         public void Execute(FrameInfoCrawler.CaptureFlag flag,System.Action endCall = null)
@@ -38,6 +40,11 @@ namespace UTJ.FrameDebugSave
             crawler.Request(flag, EndCrawler);
         }
 
+        public void Cancel(System.Action endCall = null)
+        {
+            crawler.Cancel(CancelCrawler);
+        }
+
 
 
 
@@ -49,6 +56,12 @@ namespace UTJ.FrameDebugSave
             SaveDetailJsonData(dirPath);
             crawler = null;
             OnEndAct?.Invoke();
+        }
+
+        private void CancelCrawler()
+        {
+            crawler = null;
+            OnCancelAct?.Invoke();
         }
 
         private void SaveFrameDebuggerEventsCsv(string dirPath)
