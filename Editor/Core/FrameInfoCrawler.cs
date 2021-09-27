@@ -147,6 +147,10 @@ namespace UTJ.FrameDebugSave
         private ReflectionCache reflectionCache;
         private ReflectionType frameDebuggeUtil;
         private ReflectionType frameEventData;
+#if UNITY_2021_2_OR_NEWER
+        private ReflectionType frameDebugger;
+#endif
+
         private float currentProgress;
 
 
@@ -168,7 +172,10 @@ namespace UTJ.FrameDebugSave
             this.frameDebuggeUtil = reflectionCache.GetTypeObject("UnityEditorInternal.FrameDebuggerUtility");
             this.frameEventData = reflectionCache.GetTypeObject("UnityEditorInternal.FrameDebuggerEventData");
 
-            var frameDebuggerWindowType = this.reflectionCache.GetTypeObject("UnityEditor.FrameDebuggerWindow");
+#if UNITY_2021_2_OR_NEWER
+            this.frameDebugger = reflectionCache.GetTypeObject(typeof(UnityEngine.FrameDebugger));
+#endif
+        var frameDebuggerWindowType = this.reflectionCache.GetTypeObject("UnityEditor.FrameDebuggerWindow");
             var window = frameDebuggerWindowType.CallMethod<object>("ShowFrameDebuggerWindow", null, null);
             this.frameDebuggerWindowObj = new ReflectionClassWithObject(frameDebuggerWindowType, window);
 
@@ -268,7 +275,7 @@ namespace UTJ.FrameDebugSave
                 this.CreateShaderPropInfos(frameInfo);
                 frameDebuggerEventDataList.Add(frameInfo);
 
-                bool isRemoteEnalbed = frameDebuggeUtil.CallMethod<bool>("IsRemoteEnabled", null, null);
+                bool isRemoteEnalbed = this.IsRemoteEnabled();
                 if (!isRemoteEnalbed)
                 {
                     SetRenderTextureLastChange(frameInfo);
@@ -318,7 +325,7 @@ namespace UTJ.FrameDebugSave
 
         private IEnumerator WaitForRemoteConnect(double deltaTime)
         {
-            bool isRemoteEnalbed = frameDebuggeUtil.CallMethod<bool>("IsRemoteEnabled", null, null);
+            bool isRemoteEnalbed = this.IsRemoteEnabled();
             bool isReceiving = frameDebuggeUtil.GetPropertyValue<bool>("receivingRemoteFrameEventData", null);
 
             double startTime = EditorApplication.timeSinceStartup;
@@ -328,7 +335,7 @@ namespace UTJ.FrameDebugSave
                 while ( (EditorApplication.timeSinceStartup - startTime) < deltaTime)
                 {
                     this.frameDebuggerWindowObj.CallMethod<object>("RepaintOnLimitChange", null);
-                    isRemoteEnalbed = frameDebuggeUtil.CallMethod<bool>("IsRemoteEnabled", null, null);
+                    isRemoteEnalbed = this.IsRemoteEnabled();
                     isReceiving = frameDebuggeUtil.GetPropertyValue<bool>("receivingRemoteFrameEventData", null);
                     if (isRemoteEnalbed && isReceiving)
                     {
@@ -449,6 +456,15 @@ namespace UTJ.FrameDebugSave
             }
             return saveTextureInfo;
 
+        }
+
+        private bool IsRemoteEnabled()
+        {
+#if UNITY_2021_2_OR_NEWER
+            return frameDebugger.CallMethod<bool>("IsRemoteEnabled", null, null);
+#else
+            return frameDebuggeUtil.CallMethod<bool>("IsRemoteEnabled", null, null);
+#endif
         }
 
         private void ExecuteSaveScreenShot(FrameDebuggerEventData frameInfo,bool isFinalFrameEvent)
