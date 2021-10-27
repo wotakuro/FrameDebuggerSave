@@ -64,11 +64,7 @@ namespace UTJ.FrameDebugSave
                 }
                 else
                 {
-#if UNITY_2019_2_OR_NEWER
                     writeTexture = new Texture2D(tex.width, tex.height, tex.format, tex.mipmapCount, false);
-#else
-                    writeTexture = new Texture2D(tex.width, tex.height, tex.format, tex.mipmapCount > 0, false);
-#endif
                     Graphics.CopyTexture(tex, writeTexture);
                 }
                 if (ShoudSaveRawData(tex))
@@ -177,7 +173,16 @@ namespace UTJ.FrameDebugSave
                 }
             }
 #else
-            tex = new Texture2D(info.width, info.height, (TextureFormat)info.textureFormat, info.mipCount, false);
+            if(info.type == FrameDebugDumpInfo.SavedTextureInfo.TYPE_PNG)
+            {
+                tex = new Texture2D(info.width, info.height, 
+                    TextureFormat.RGBA32, info.mipCount, false);
+
+            }
+            else if (info.textureFormat != -1)
+            {
+                tex = new Texture2D(info.width, info.height, (TextureFormat)info.textureFormat, info.mipCount, false);
+            }
 #endif
 
             if(tex == null)

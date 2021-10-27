@@ -194,29 +194,22 @@ namespace UTJ.FrameDebugSave
             FrameDebugDumpInfo.SavedTextureInfo saveInfo = null;
             try
             {
-                Texture2D tex = new Texture2D(renderTexture.width, renderTexture.height, 
+                Texture2D tex = new Texture2D(renderTexture.width, renderTexture.height,
                     GetTextureFormat(renderTexture), false);
                 RenderTexture.active = renderTexture;
                 tex.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
                 tex.Apply();
 
-                if (TextureUtility.ShoudSaveRawData(tex))
-                {
-                    byte[] bytes = tex.GetRawTextureData();
-                    file += ".raw";
-                    System.IO.File.WriteAllBytes(file, bytes);
-                    saveInfo = new FrameDebugDumpInfo.SavedTextureInfo(file, renderTexture, FrameDebugDumpInfo.SavedTextureInfo.TYPE_RAWDATA);
-                }
-                else
-                {
-                    byte[] bytes = tex.EncodeToPNG();
-                    file += ".png";
-                    System.IO.File.WriteAllBytes(file, bytes);
-                    saveInfo = new FrameDebugDumpInfo.SavedTextureInfo(file, renderTexture, FrameDebugDumpInfo.SavedTextureInfo.TYPE_PNG);
-                }
+                byte[] bytes = tex.EncodeToPNG();
+                file += ".png";
+                System.IO.File.WriteAllBytes(file, bytes);
+                saveInfo = new FrameDebugDumpInfo.SavedTextureInfo(file, tex, 
+                    FrameDebugDumpInfo.SavedTextureInfo.TYPE_PNG);
                 Object.DestroyImmediate(tex);
                 return saveInfo;
-            }catch(System.Exception e){
+            }
+            catch (System.Exception e)
+            {
                 Debug.LogError(e);
             }
             return null;

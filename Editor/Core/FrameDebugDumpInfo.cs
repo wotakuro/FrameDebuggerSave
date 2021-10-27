@@ -229,7 +229,7 @@ namespace UTJ.FrameDebugSave
                 lastDirIdx += 1;
 
                 this.path = p.Substring(lastDirIdx);
-                if (t == TYPE_RAWDATA && tex.GetType() == typeof(Texture2D))
+                if ( tex.GetType() == typeof(Texture2D))
                 {
                     this.textureFormat = (int) ((Texture2D)tex).format;
                 }
