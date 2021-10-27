@@ -1,47 +1,36 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:VisualElement style="flex-wrap: no-wrap; flex-direction: row;">
         <Style src="FrameEventsViewer.uss" />
-
         <ui:VisualElement name="Captures" style="width: 240px; min-width: 240px;">
-          <!-- Shader Variant Collection -->
-          <ui:Label text="Add to ShaderVaiantCollection" />
-          <uie:ObjectField name="VariantCollectionObject" style="width:180px;margin-left: 10px;"/>
-          <ui:VisualElement style="flex-direction: row; flex-shrink: 0;margin-left: 10px;margin-bottom: 10px;"
-                            tooltip="Add shader variants to the ShaderVariantCollection asset from saved capture datas.">
-              <uie:EnumFlagsField name="VariantFlag" value="None"  style="width:150px;"/>
-              <ui:Button name="AddToCollectionBtn" text="Add" />
+            <ui:Label text="Add to ShaderVaiantCollection" />
+            <uie:ObjectField name="VariantCollectionObject" style="width: 180px; margin-left: 10px;" />
+            <ui:VisualElement tooltip="Add shader variants to the ShaderVariantCollection asset from saved capture datas." style="flex-direction: row; flex-shrink: 0; margin-left: 10px; margin-bottom: 10px;">
+                <uie:EnumFlagsField name="VariantFlag" value="None" style="width: 150px;" />
+                <ui:Button name="AddToCollectionBtn" text="Add" />
             </ui:VisualElement>
-
             <ui:Label text="New Captures" />
-            <ui:VisualElement style="flex-direction: row; flex-shrink: 0;margin-left: 10px;margin-bottom: 10px;"
-                            tooltip="Capture via FrameDebugger and save the information.">
-              <uie:EnumFlagsField name="CaptureFlag" value="None"  style="width:150px;"/>
-              <ui:Button name="CaptureBtn" text="capture" />
+            <ui:VisualElement tooltip="Capture via FrameDebugger and save the information." style="flex-direction: row; flex-shrink: 0; margin-left: 10px; margin-bottom: 10px;">
+                <uie:EnumFlagsField name="CaptureFlag" value="None" style="width: 150px;" />
+                <ui:Button name="CaptureBtn" text="capture" />
             </ui:VisualElement>
-
-          <ui:Label text="Captures" />
-          <ui:ScrollView name="CaptureItems" style="margin-left: 10px;"/>
+            <ui:Label text="Captures" />
+            <ui:ScrollView name="CaptureItems" style="margin-left: 10px;" />
         </ui:VisualElement>
-
         <ui:VisualElement name="FrameInfo" style="left: 0; width: 200px; min-width: 200px;">
             <ui:Label text="Events" />
             <UTJ.FrameDebugSave.UI.FrameEventListView name="FrameEvents" />
         </ui:VisualElement>
-      
-        <ui:VisualElement name="Detail" style="flex-shrink: 0; flex-grow: 1;  min-width: 200px;">
-            <ui:Label text="Label" />
+        <ui:VisualElement name="Detail" style="flex-shrink: 0; flex-grow: 1; min-width: 200px;">
             <ui:Label text="Screenshot" />
-
             <ui:VisualElement style="flex-direction: row; flex-shrink: 0;">
-              <UTJ.FrameDebugSave.UI.ScalableImageView name="ScreenShot" style="padding-left: 10px; width: 100px; height: 100px;" />
-              <ui:Foldout text="RenderTargetInfo" name="RenderTargetInfo" />
+                <UTJ.FrameDebugSave.UI.ScalableImageView name="ScreenShot" style="padding-left: 10px; width: 100px; height: 100px;" />
+                <ui:Foldout text="RenderTargetInfo" name="RenderTargetInfo" />
             </ui:VisualElement>
-            <ui:VisualElement style="height:3px; background-color:#000000;" />
-
+            <ui:VisualElement style="height: 3px; background-color: rgb(0, 0, 0);" />
             <ui:ScrollView name="DetailScroll" style="flex-shrink: 1;">
-              <ui:Foldout text="RenderingInfo" name="RenderingInfo" />
-              <ui:Foldout text="ShaderInfo" name="ShaderInfo" />
-              <ui:Foldout text="ShaderParameters" name="ShaderParameters" />
+                <ui:Foldout text="RenderingInfo" name="RenderingInfo" />
+                <ui:Foldout text="ShaderInfo" name="ShaderInfo" />
+                <ui:Foldout text="ShaderParameters" name="ShaderParameters" />
             </ui:ScrollView>
         </ui:VisualElement>
     </ui:VisualElement>

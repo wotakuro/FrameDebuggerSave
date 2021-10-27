@@ -98,33 +98,6 @@ namespace UTJ.FrameDebugSave
             return null;
         }
 
-        private static TextureFormat GetTextureFormat(RenderTexture tex)
-        {
-            switch (tex.format)
-            {
-                case RenderTextureFormat.ARGB2101010:
-                case RenderTextureFormat.ARGB64:
-                case RenderTextureFormat.ARGBFloat:
-                    return TextureFormat.RGBAFloat;
-                case RenderTextureFormat.ARGBHalf:
-                case RenderTextureFormat.DefaultHDR:
-                case RenderTextureFormat.RGB111110Float:
-                    return TextureFormat.RGBAHalf;
-            }
-            return TextureFormat.RGBA32;
-        }
-
-        public static bool ShouldSaveAsDepth(RenderTexture tex)
-        {
-            switch (tex.format)
-            {
-                case RenderTextureFormat.Depth:
-                    return true;
-                case RenderTextureFormat.Shadowmap:
-                    return true;
-            }
-            return false;
-        }
 
  
         internal static bool ShoudSaveRawData(Texture2D tex)
@@ -181,44 +154,55 @@ namespace UTJ.FrameDebugSave
             {
                 return null;
             }
-            byte[] data = System.IO.File.ReadAllBytes(path);
             Texture2D tex = null;
 #if UNITY_2020_2_OR_NEWER
-            if (info.type == FrameDebugDumpInfo.SavedTextureInfo.TYPE_RENDERTEXURE_RAWDATA)
+            
+            if (info.type != FrameDebugDumpInfo.SavedTextureInfo.TYPE_NO_TEXTURE )
             {
-                if (info.mipCount > 1)
+                if (info.textureFormat != -1)
                 {
-                    tex = new Texture2D(info.width, info.height, info.savedFormat, info.mipCount,
-                        TextureCreationFlags.MipChain);
-                }
-                else
-                {
-                    tex = new Texture2D(info.width, info.height, info.savedFormat, info.mipCount,
-                        TextureCreationFlags.None);
+                    tex = new Texture2D(info.width, info.height,
+                        (TextureFormat)info.textureFormat, info.mipCount, false);
+                }else if(info.saveGraphicsFormat != -1){
+                    if (info.mipCount > 1)
+                    {
+                        tex = new Texture2D(info.width, info.height, info.savedFormat, info.mipCount,
+                            TextureCreationFlags.MipChain);
+                    }
+                    else
+                    {
+                        tex = new Texture2D(info.width, info.height, info.savedFormat, info.mipCount,
+                            TextureCreationFlags.None);
+                    }
                 }
             }
-            else if (info.type != FrameDebugDumpInfo.SavedTextureInfo.TYPE_NO_TEXTURE )
-            {
-                tex = new Texture2D(info.width, info.height, 
-                    (TextureFormat)info.textureFormat, info.mipCount, false);
-            }
-#elif UNITY_2019_2_OR_NEWER
-            tex = new Texture2D(info.width, info.height, info.rawFormat, info.mipCount, false);
 #else
-            tex = new Texture2D(info.width, info.height, info.rawFormat, (info.mipCount > 0), false);
+            tex = new Texture2D(info.width, info.height, info.rawFormat, info.mipCount, false);
 #endif
+
+            if(tex == null)
+            {
+                Debug.LogError(info.path);
+            }
             switch (info.type)
             {
                 case FrameDebugDumpInfo.SavedTextureInfo.TYPE_PNG:
-                    ImageConversion.LoadImage(tex, data);
+                    ImageConversion.LoadImage(tex, System.IO.File.ReadAllBytes(path));
                     break;
                 case FrameDebugDumpInfo.SavedTextureInfo.TYPE_EXR:
-                    ImageConversion.LoadImage(tex, data);
+                    ImageConversion.LoadImage(tex, System.IO.File.ReadAllBytes(path));
                     break;
                 case FrameDebugDumpInfo.SavedTextureInfo.TYPE_RAWDATA:
                 case FrameDebugDumpInfo.SavedTextureInfo.TYPE_RENDERTEXURE_RAWDATA:
-                    tex.LoadRawTextureData(data);
-                    tex.Apply();
+                    {
+                        var data = FileLoadUtility.ReadFile(path);
+                        if (data.IsCreated)
+                        {
+                            tex.LoadRawTextureData(data);
+                            tex.Apply();
+                        }
+                        data.Dispose();
+                    }
                     break;
             }
 

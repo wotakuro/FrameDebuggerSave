@@ -259,7 +259,6 @@ namespace UTJ.FrameDebugSave
             if( saveInfo == null) { return; }
             using (new JsonStringGenerator.ObjectScopeWithName(jsonStringGenerator, objName))
             {
-                Debug.Log("SavePath " + saveInfo.path);
                 jsonStringGenerator.AddObjectValue("path", saveInfo.path);
                 jsonStringGenerator.AddObjectValue("type", saveInfo.type);
                 jsonStringGenerator.AddObjectValue("width", saveInfo.width);

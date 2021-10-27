@@ -12,21 +12,16 @@ namespace UTJ.FrameDebugSave
 
 
 #if UNITY_2020_2_OR_NEWER
+        private static Material depthMaterial;
+
         public static FrameDebugDumpInfo.SavedTextureInfo SaveRenderTexture(RenderTexture src, string file)
         {
-            // ‰¼‘Î‰ž
-            if (src.format == RenderTextureFormat.Depth || src.format == RenderTextureFormat.Shadowmap)
-            {
-                file += ".shadow";
-                return new FrameDebugDumpInfo.SavedTextureInfo(file, src,
-                    FrameDebugDumpInfo.SavedTextureInfo.TYPE_NO_TEXTURE);
-            }
-
+            
             FrameDebugDumpInfo.SavedTextureInfo saveInfo = null;
             byte[] saveData = null;
             RenderTexture capture = null;
-            bool isCreateTmpTexture = ShouldCreateTmpTexture(src);
-            if ( isCreateTmpTexture)
+            bool createTmpTexture = ShouldCreateTmpTexture(src);
+            if ( createTmpTexture)
             {
                 capture = CreateTmpTexture(src);
             }
@@ -56,7 +51,7 @@ namespace UTJ.FrameDebugSave
                 saveInfo = new FrameDebugDumpInfo.SavedTextureInfo(file, capture, FrameDebugDumpInfo.SavedTextureInfo.TYPE_PNG);
             }
 
-            if (isCreateTmpTexture)
+            if (createTmpTexture)
             {
                 RenderTexture.active = null;
                 capture.Release();
@@ -71,9 +66,20 @@ namespace UTJ.FrameDebugSave
 
         private static RenderTexture CreateTmpTexture(RenderTexture src)
         {
-
             RenderTexture dest = null;
-            if (Prefer32Bit(src.graphicsFormat))
+            if (ShouldSaveAsDepth(src))
+            {
+                if (!depthMaterial) { depthMaterial = new Material(Shader.Find("Hidden/RenderDebugSave/RenderDepth")); }
+                dest = new RenderTexture(src.width, src.height, src.depth,
+                    GraphicsFormat.R16_SFloat, src.mipmapCount);
+
+                CommandBuffer cmdBuffer = new CommandBuffer();
+                cmdBuffer.SetRenderTarget(dest);
+                cmdBuffer.ClearRenderTarget(true, true, Color.black);
+                cmdBuffer.Blit(src, dest, depthMaterial);
+                Graphics.ExecuteCommandBuffer(cmdBuffer);
+                return dest;
+            }else if (Prefer32Bit(src.graphicsFormat))
             {
                 dest = new RenderTexture(src.width, src.height, src.depth,
                     GraphicsFormat.R32G32B32A32_SFloat,src.mipmapCount);
@@ -92,11 +98,25 @@ namespace UTJ.FrameDebugSave
             return dest;
         }
 
+        private static bool ShouldSaveAsDepth(RenderTexture tex)
+        {
+            switch (tex.format)
+            {
+                case RenderTextureFormat.Depth:
+                case RenderTextureFormat.Shadowmap:
+                    return true;
+            }
+            return false;
+        }
+
         private static bool ShouldCreateTmpTexture(RenderTexture rt)
         {
+            if (ShouldSaveAsDepth(rt)) { return true; }
             var format = rt.graphicsFormat;
+            bool isSupportSetPixel = SystemInfo.IsFormatSupported(format, FormatUsage.SetPixels);
+            if (!isSupportSetPixel) { return true; }
             bool isSupportReadPixel = SystemInfo.IsFormatSupported(format, FormatUsage.ReadPixels);
-            if (isSupportReadPixel) { return true; }
+            if (!isSupportReadPixel) { return true; }
             return false;
         }
 

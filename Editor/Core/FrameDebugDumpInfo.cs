@@ -173,13 +173,13 @@ namespace UTJ.FrameDebugSave
             [SerializeField]
             public int mipCount;
             [SerializeField]
-            public int textureFormat;
+            public int textureFormat = -1;
 
 #if UNITY_2020_2_OR_NEWER
             [SerializeField]
-            public int saveGraphicsFormat;
+            public int saveGraphicsFormat = -1;
             [SerializeField]
-            public int originGraphicsFormat;
+            public int originGraphicsFormat = -1;
 
             public GraphicsFormat savedFormat
             {
@@ -231,6 +231,10 @@ namespace UTJ.FrameDebugSave
                 {
                     this.textureFormat = (int) ((Texture2D)tex).format;
                 }
+#if UNITY_2020_2_OR_NEWER
+                originGraphicsFormat = (int)tex.graphicsFormat;
+                saveGraphicsFormat = (int)tex.graphicsFormat;
+#endif
             }
 
 
