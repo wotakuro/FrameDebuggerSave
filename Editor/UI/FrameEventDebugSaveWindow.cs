@@ -192,6 +192,9 @@ namespace UTJ.FrameDebugSave.UI
             {
                 foreach (var floatParam in shaderParams.floats)
                 {
+                    if(floatParam.name == "<noninit>"){
+                        continue;
+                    }
                     var elem = CreateShaderParamVE(floatParam);
                     parentElement.Add(elem);
                 }
@@ -200,6 +203,10 @@ namespace UTJ.FrameDebugSave.UI
             {
                 foreach (var vectorParam in shaderParams.vectors)
                 {
+                    if (vectorParam.name == "<noninit>")
+                    {
+                        continue;
+                    }
                     var elem = CreateShaderParamVE(vectorParam);
                     parentElement.Add(elem);
                 }
@@ -208,6 +215,9 @@ namespace UTJ.FrameDebugSave.UI
             {
                 foreach (var matrixParam in shaderParams.matricies)
                 {
+                    if (matrixParam.name == "<noninit>") {
+                        continue;
+                    }
                     var elem = CreateShaderParamVE(matrixParam);
                     parentElement.Add(elem);
                 }
