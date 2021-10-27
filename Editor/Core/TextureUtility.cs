@@ -2,58 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+#if UNITY_2020_2_OR_NEWER
+using UnityEngine.Experimental.Rendering;
+#endif
+
 namespace UTJ.FrameDebugSave
 {
     public class TextureUtility
     {
-        public class SaveTextureInfo
-        {
-            public const int TYPE_PNG = 0;
-            public const int TYPE_EXR = 1;
-            public const int TYPE_RAWDATA = 2;
-
-            public string path;
-            public int type;
-            public int width;
-            public int height;
-
-            public TextureFormat rawFormat;
-            public int mipCount;
-
-            public SaveTextureInfo(string p, int t, int w, int h, TextureFormat format, int mip)
-            {
-                this.path = p;
-                this.type = t;
-                this.width = w;
-                this.height = h;
-                this.rawFormat = format;
-                this.mipCount = mip;
-
-            }
-
-            public SaveTextureInfo(string p,Texture tex,int t)
-            {
-                this.width = tex.width;
-                this.height = tex.height;
-                this.mipCount = GetMipMapCount(tex);
-                this.type = t;
-                p = p.Replace('\\', '/');
-                int fileNameIdx = p.LastIndexOf('/');
-                int lastDirIdx = 0;
-                if (fileNameIdx > 0)
-                {
-                    lastDirIdx = p.LastIndexOf('/', fileNameIdx - 1);
-                }
-                lastDirIdx += 1;
-
-                this.path = p.Substring(lastDirIdx);
-                if( t == TYPE_RAWDATA && tex.GetType() == typeof(Texture2D))
-                {
-                    this.rawFormat = ((Texture2D)tex).format;
-                }
-            }
-        }
-
         public static RenderTexture GetGameViewRT()
         {
             var renderTextures = Resources.FindObjectsOfTypeAll<RenderTexture>();
@@ -83,41 +39,22 @@ namespace UTJ.FrameDebugSave
             return target;
         }
 
-        public static SaveTextureInfo SaveRenderTexture(RenderTexture renderTexture, string file)
+        public static FrameDebugDumpInfo.SavedTextureInfo 
+            SaveRenderTexture(RenderTexture renderTexture, string file)
         {
-            SaveTextureInfo saveInfo = null;
             try
             {
-                Texture2D tex = new Texture2D(renderTexture.width, renderTexture.height, GetTextureFormat(renderTexture), false);
-                RenderTexture.active = renderTexture;
-                tex.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
-                tex.Apply();
-
-                if (ShoudSaveRawData(tex))
-                {
-                    byte[] bytes = tex.GetRawTextureData();
-                    file += ".raw";
-                    System.IO.File.WriteAllBytes(file, bytes);
-                    saveInfo = new SaveTextureInfo(file, renderTexture, SaveTextureInfo.TYPE_RAWDATA);
-                }
-                else
-                {
-                    byte[] bytes = tex.EncodeToPNG();
-                    file += ".png";
-                    System.IO.File.WriteAllBytes(file, bytes);
-                    saveInfo = new SaveTextureInfo(file, renderTexture, SaveTextureInfo.TYPE_PNG);
-                }
-                Object.DestroyImmediate(tex);
-                return saveInfo;
-            }catch(System.Exception e){
+                return RenderTextureSaveUtility.SaveRenderTexture(renderTexture, file);
+            }catch(System.Exception e)
+            {
                 Debug.LogError(e);
+                return null;
             }
-            return null;
         }
 
-        public static SaveTextureInfo SaveTexture(Texture2D tex, string file)
+        public static FrameDebugDumpInfo.SavedTextureInfo SaveTexture(Texture2D tex, string file)
         {
-            SaveTextureInfo saveInfo = null;
+            FrameDebugDumpInfo.SavedTextureInfo saveInfo = null;
             try
             {
                 Texture2D writeTexture = null;
@@ -139,14 +76,14 @@ namespace UTJ.FrameDebugSave
                     byte[] bytes = writeTexture.GetRawTextureData();
                     file += ".raw";
                     System.IO.File.WriteAllBytes(file, bytes);
-                    saveInfo = new SaveTextureInfo(file, tex, SaveTextureInfo.TYPE_RAWDATA);
+                    saveInfo = new FrameDebugDumpInfo.SavedTextureInfo(file, tex, FrameDebugDumpInfo.SavedTextureInfo.TYPE_RAWDATA);
                 }
                 else
                 {
                     byte[] bytes = writeTexture.EncodeToPNG();
                     file += ".png";
                     System.IO.File.WriteAllBytes(file, bytes);
-                    saveInfo = new SaveTextureInfo(file, tex, SaveTextureInfo.TYPE_PNG);
+                    saveInfo = new FrameDebugDumpInfo.SavedTextureInfo(file, tex, FrameDebugDumpInfo.SavedTextureInfo.TYPE_PNG);
                 }
                 if (tex != writeTexture)
                 {
@@ -177,7 +114,7 @@ namespace UTJ.FrameDebugSave
             return TextureFormat.RGBA32;
         }
 
-        private static bool ShouldSaveAsDepth(RenderTexture tex)
+        public static bool ShouldSaveAsDepth(RenderTexture tex)
         {
             switch (tex.format)
             {
@@ -190,7 +127,7 @@ namespace UTJ.FrameDebugSave
         }
 
  
-        private static bool ShoudSaveRawData(Texture2D tex)
+        internal static bool ShoudSaveRawData(Texture2D tex)
         {
             switch (tex.format)
             {
@@ -234,28 +171,52 @@ namespace UTJ.FrameDebugSave
             return false;
         }
 
-        public static Texture LoadTexture(string basePath , SaveTextureInfo info)
+        public static Texture LoadTexture(string basePath , FrameDebugDumpInfo.SavedTextureInfo info)
         {
-            if( info == null || info.path == null) {
+            if( info == null || info.path == null ) {
                 return null;
             }
             string path = System.IO.Path.Combine(basePath,info.path);
+            if(!System.IO.File.Exists(path))
+            {
+                return null;
+            }
             byte[] data = System.IO.File.ReadAllBytes(path);
             Texture2D tex = null;
-#if UNITY_2019_2_OR_NEWER
+#if UNITY_2020_2_OR_NEWER
+            if (info.type == FrameDebugDumpInfo.SavedTextureInfo.TYPE_RENDERTEXURE_RAWDATA)
+            {
+                if (info.mipCount > 1)
+                {
+                    tex = new Texture2D(info.width, info.height, info.savedFormat, info.mipCount,
+                        TextureCreationFlags.MipChain);
+                }
+                else
+                {
+                    tex = new Texture2D(info.width, info.height, info.savedFormat, info.mipCount,
+                        TextureCreationFlags.None);
+                }
+            }
+            else if (info.type != FrameDebugDumpInfo.SavedTextureInfo.TYPE_NO_TEXTURE )
+            {
+                tex = new Texture2D(info.width, info.height, 
+                    (TextureFormat)info.textureFormat, info.mipCount, false);
+            }
+#elif UNITY_2019_2_OR_NEWER
             tex = new Texture2D(info.width, info.height, info.rawFormat, info.mipCount, false);
 #else
             tex = new Texture2D(info.width, info.height, info.rawFormat, (info.mipCount > 0), false);
 #endif
             switch (info.type)
             {
-                case SaveTextureInfo.TYPE_PNG:
+                case FrameDebugDumpInfo.SavedTextureInfo.TYPE_PNG:
                     ImageConversion.LoadImage(tex, data);
                     break;
-                case SaveTextureInfo.TYPE_EXR:
+                case FrameDebugDumpInfo.SavedTextureInfo.TYPE_EXR:
                     ImageConversion.LoadImage(tex, data);
                     break;
-                case SaveTextureInfo.TYPE_RAWDATA:
+                case FrameDebugDumpInfo.SavedTextureInfo.TYPE_RAWDATA:
+                case FrameDebugDumpInfo.SavedTextureInfo.TYPE_RENDERTEXURE_RAWDATA:
                     tex.LoadRawTextureData(data);
                     tex.Apply();
                     break;

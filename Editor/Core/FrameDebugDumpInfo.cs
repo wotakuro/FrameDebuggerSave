@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 
+#if UNITY_2020_2_OR_NEWER
+using UnityEngine.Experimental.Rendering;
+#endif
+
 namespace UTJ.FrameDebugSave
 {
     public class FrameDebugDumpInfo
@@ -152,6 +156,12 @@ namespace UTJ.FrameDebugSave
         [System.Serializable]
         public class SavedTextureInfo
         {
+            public const int TYPE_PNG = 0;
+            public const int TYPE_EXR = 1;
+            public const int TYPE_RAWDATA = 2;
+            public const int TYPE_RENDERTEXURE_RAWDATA = 3;
+            public const int TYPE_NO_TEXTURE = 4;
+
             [SerializeField]
             public string path;
             [SerializeField]
@@ -163,29 +173,75 @@ namespace UTJ.FrameDebugSave
             [SerializeField]
             public int mipCount;
             [SerializeField]
-            public string rawFormat;
+            public int textureFormat;
+
+#if UNITY_2020_2_OR_NEWER
+            [SerializeField]
+            public int saveGraphicsFormat;
+            [SerializeField]
+            public int originGraphicsFormat;
+
+            public GraphicsFormat savedFormat
+            {
+                get { return (GraphicsFormat)saveGraphicsFormat; }
+            }
+            public GraphicsFormat originFormat
+            {
+                get { return (GraphicsFormat)originGraphicsFormat; }
+            }
+#endif
+            public SavedTextureInfo(string p, RenderTexture origin,
+                RenderTexture capture)
+            {
+                this.width = capture.width;
+                this.height = capture.height;
+                this.mipCount = TextureUtility.GetMipMapCount(capture);
+                this.type = TYPE_RENDERTEXURE_RAWDATA;
+                p = p.Replace('\\', '/');
+                int fileNameIdx = p.LastIndexOf('/');
+                int lastDirIdx = 0;
+                if (fileNameIdx > 0)
+                {
+                    lastDirIdx = p.LastIndexOf('/', fileNameIdx - 1);
+                }
+                lastDirIdx += 1;
+
+                this.path = p.Substring(lastDirIdx);
+                originGraphicsFormat = (int)origin.graphicsFormat;
+                saveGraphicsFormat = (int)capture.graphicsFormat;
+            }
+
+            public SavedTextureInfo(string p, Texture tex, int t)
+            {
+                this.width = tex.width;
+                this.height = tex.height;
+                this.mipCount = TextureUtility.GetMipMapCount(tex);
+                this.type = t;
+                p = p.Replace('\\', '/');
+                int fileNameIdx = p.LastIndexOf('/');
+                int lastDirIdx = 0;
+                if (fileNameIdx > 0)
+                {
+                    lastDirIdx = p.LastIndexOf('/', fileNameIdx - 1);
+                }
+                lastDirIdx += 1;
+
+                this.path = p.Substring(lastDirIdx);
+                if (t == TYPE_RAWDATA && tex.GetType() == typeof(Texture2D))
+                {
+                    this.textureFormat = (int) ((Texture2D)tex).format;
+                }
+            }
+
+
         }
 
         public static Texture2D LoadTexture(string basePath , SavedTextureInfo info)
         {
-            var converted = Convert(info);
-            return TextureUtility.LoadTexture(basePath , converted) as Texture2D;
+            return TextureUtility.LoadTexture(basePath , info) as Texture2D;
         }
 
-        private static TextureUtility.SaveTextureInfo Convert(SavedTextureInfo info)
-        {
-            TextureFormat format = TextureFormat.R8;
-            foreach ( var val in System.Enum.GetValues(typeof(TextureFormat)))
-            {
-                if(val.ToString() == info.rawFormat){
-                    format = (TextureFormat)val;
-                    break;
-                }
-            }
-            TextureUtility.SaveTextureInfo convert = new TextureUtility.SaveTextureInfo(info.path,info.type,
-                info.width,info.height,format,info.mipCount);
-            return convert;
-        }
+
 
         public static FrameDebugDumpInfo LoadFromFile(string path)
         {

@@ -4,6 +4,10 @@ using UnityEditor;
 using UnityEngine;
 using UnityEditorInternal;
 
+#if UNITY_2020_2_OR_NEWER
+using UnityEngine.Experimental.Rendering;
+#endif
+
 namespace UTJ.FrameDebugSave
 {
     public class FrameInfoCrawler
@@ -28,7 +32,7 @@ namespace UTJ.FrameDebugSave
             public string textureName;
             public object value;
 
-            public TextureUtility.SaveTextureInfo saveTextureInfo;
+            public FrameDebugDumpInfo.SavedTextureInfo saveTextureInfo;
         }
 
 
@@ -95,7 +99,7 @@ namespace UTJ.FrameDebugSave
             public int stencilRef;
 
             // non Serialized 
-            public TextureUtility.SaveTextureInfo savedScreenShotInfo;
+            public FrameDebugDumpInfo.SavedTextureInfo savedScreenShotInfo;
             public string batchBreakCauseStr;
             public ShaderProperties convertedProperties;
         }
@@ -160,9 +164,9 @@ namespace UTJ.FrameDebugSave
         private string[] breakReasons;
         private CaptureFlag captureFlag;
 
-        private Dictionary<int, TextureUtility.SaveTextureInfo> alreadyWriteTextureDict;
+        private Dictionary<int, FrameDebugDumpInfo.SavedTextureInfo> alreadyWriteTextureDict;
 
-        private Dictionary<SavedRenderTextureInfo, TextureUtility.SaveTextureInfo> savedRenderTexture;
+        private Dictionary<SavedRenderTextureInfo, FrameDebugDumpInfo.SavedTextureInfo> savedRenderTexture;
         private Dictionary<int, int> renderTextureLastChanged;
 
 
@@ -180,8 +184,8 @@ namespace UTJ.FrameDebugSave
             this.frameDebuggerWindowObj = new ReflectionClassWithObject(frameDebuggerWindowType, window);
 
             this.IsRunning = false;
-            this.alreadyWriteTextureDict = new Dictionary<int, TextureUtility.SaveTextureInfo>();
-            this.savedRenderTexture = new Dictionary<SavedRenderTextureInfo, TextureUtility.SaveTextureInfo>();
+            this.alreadyWriteTextureDict = new Dictionary<int, FrameDebugDumpInfo.SavedTextureInfo>();
+            this.savedRenderTexture = new Dictionary<SavedRenderTextureInfo, FrameDebugDumpInfo.SavedTextureInfo>();
             this.renderTextureLastChanged = new Dictionary<int, int>();
         }
         public void Request(CaptureFlag flag,System.Action callback)
@@ -405,7 +409,7 @@ namespace UTJ.FrameDebugSave
             var textureParams = frameInfo.convertedProperties.convertedTextures;
             foreach( var textureParam in textureParams)
             {
-                TextureUtility.SaveTextureInfo saveTextureInfo = null;
+                FrameDebugDumpInfo.SavedTextureInfo saveTextureInfo = null;
                 var texture = textureParam.value as Texture;
                 if (texture == null) { continue; }
 
@@ -427,12 +431,13 @@ namespace UTJ.FrameDebugSave
             }
         }
 
-        private TextureUtility.SaveTextureInfo SaveTexture2D(Texture2D texture,string dir)
+        private FrameDebugDumpInfo.SavedTextureInfo SaveTexture2D(Texture2D texture,string dir)
         {
-            TextureUtility.SaveTextureInfo saveTextureInfo = null;
+            FrameDebugDumpInfo.SavedTextureInfo saveTextureInfo = null;
 
             // already saved texture
-            if (alreadyWriteTextureDict.TryGetValue(texture.GetInstanceID(), out saveTextureInfo))
+            if (alreadyWriteTextureDict.TryGetValue(texture.GetInstanceID(),
+                out saveTextureInfo))
             {
                 return saveTextureInfo;
             }
@@ -441,9 +446,9 @@ namespace UTJ.FrameDebugSave
             alreadyWriteTextureDict.Add(texture.GetInstanceID(), saveTextureInfo);
             return saveTextureInfo;
         }
-        private TextureUtility.SaveTextureInfo SaveRenderTexture(RenderTexture texture, string dir)
+        private FrameDebugDumpInfo.SavedTextureInfo SaveRenderTexture(RenderTexture texture, string dir)
         {
-            TextureUtility.SaveTextureInfo saveTextureInfo = null;
+            FrameDebugDumpInfo.SavedTextureInfo saveTextureInfo = null;
             int renderTextureChangedIdx = -1;
             renderTextureLastChanged.TryGetValue(texture.GetInstanceID(), out renderTextureChangedIdx);
             SavedRenderTextureInfo savedRTInfo = new SavedRenderTextureInfo(texture.GetInstanceID(), renderTextureChangedIdx);

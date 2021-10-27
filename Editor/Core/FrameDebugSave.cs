@@ -254,17 +254,23 @@ namespace UTJ.FrameDebugSave
                 }
             }
         }
-        private void AppendSavedTextureInfo(JsonStringGenerator jsonStringGenerator,string objName , TextureUtility.SaveTextureInfo saveInfo)
+        private void AppendSavedTextureInfo(JsonStringGenerator jsonStringGenerator,string objName , FrameDebugDumpInfo.SavedTextureInfo saveInfo)
         {
             if( saveInfo == null) { return; }
             using (new JsonStringGenerator.ObjectScopeWithName(jsonStringGenerator, objName))
             {
+                Debug.Log("SavePath " + saveInfo.path);
                 jsonStringGenerator.AddObjectValue("path", saveInfo.path);
                 jsonStringGenerator.AddObjectValue("type", saveInfo.type);
                 jsonStringGenerator.AddObjectValue("width", saveInfo.width);
                 jsonStringGenerator.AddObjectValue("height", saveInfo.height);
                 jsonStringGenerator.AddObjectValue("mipCount", saveInfo.mipCount);
-                jsonStringGenerator.AddObjectValue("rawFormat", saveInfo.rawFormat.ToString());
+                jsonStringGenerator.AddObjectValue("textureFormat", saveInfo.textureFormat);
+
+#if UNITY_2020_2_OR_NEWER
+                jsonStringGenerator.AddObjectValue("originGraphicsFormat", saveInfo.originGraphicsFormat);
+                jsonStringGenerator.AddObjectValue("saveGraphicsFormat", saveInfo.saveGraphicsFormat);
+#endif
             }
 
         }
