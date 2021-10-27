@@ -189,29 +189,30 @@ namespace UTJ.FrameDebugSave
         }
 #else
 
-        public static SaveTextureInfo SaveRenderTexture(RenderTexture renderTexture, string file)
+        public static FrameDebugDumpInfo.SavedTextureInfo SaveRenderTexture(RenderTexture renderTexture, string file)
         {
-            SaveTextureInfo saveInfo = null;
+            FrameDebugDumpInfo.SavedTextureInfo saveInfo = null;
             try
             {
-                Texture2D tex = new Texture2D(renderTexture.width, renderTexture.height, GetTextureFormat(renderTexture), false);
+                Texture2D tex = new Texture2D(renderTexture.width, renderTexture.height, 
+                    GetTextureFormat(renderTexture), false);
                 RenderTexture.active = renderTexture;
                 tex.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
                 tex.Apply();
 
-                if (ShoudSaveRawData(tex))
+                if (TextureUtility.ShoudSaveRawData(tex))
                 {
                     byte[] bytes = tex.GetRawTextureData();
                     file += ".raw";
                     System.IO.File.WriteAllBytes(file, bytes);
-                    saveInfo = new SaveTextureInfo(file, renderTexture, SaveTextureInfo.TYPE_RAWDATA);
+                    saveInfo = new FrameDebugDumpInfo.SavedTextureInfo(file, renderTexture, FrameDebugDumpInfo.SavedTextureInfo.TYPE_RAWDATA);
                 }
                 else
                 {
                     byte[] bytes = tex.EncodeToPNG();
                     file += ".png";
                     System.IO.File.WriteAllBytes(file, bytes);
-                    saveInfo = new SaveTextureInfo(file, renderTexture, SaveTextureInfo.TYPE_PNG);
+                    saveInfo = new FrameDebugDumpInfo.SavedTextureInfo(file, renderTexture, FrameDebugDumpInfo.SavedTextureInfo.TYPE_PNG);
                 }
                 Object.DestroyImmediate(tex);
                 return saveInfo;
@@ -219,6 +220,21 @@ namespace UTJ.FrameDebugSave
                 Debug.LogError(e);
             }
             return null;
+        }
+        private static TextureFormat GetTextureFormat(RenderTexture tex)
+        {
+            switch (tex.format)
+            {
+                case RenderTextureFormat.ARGB2101010:
+                case RenderTextureFormat.ARGB64:
+                case RenderTextureFormat.ARGBFloat:
+                    return TextureFormat.RGBAFloat;
+                case RenderTextureFormat.ARGBHalf:
+                case RenderTextureFormat.DefaultHDR:
+                case RenderTextureFormat.RGB111110Float:
+                    return TextureFormat.RGBAHalf;
+            }
+            return TextureFormat.RGBA32;
         }
 
 #endif

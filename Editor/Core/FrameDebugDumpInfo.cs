@@ -207,8 +207,10 @@ namespace UTJ.FrameDebugSave
                 lastDirIdx += 1;
 
                 this.path = p.Substring(lastDirIdx);
+#if UNITY_2020_2_OR_NEWER
                 originGraphicsFormat = (int)origin.graphicsFormat;
                 saveGraphicsFormat = (int)capture.graphicsFormat;
+#endif
             }
 
             public SavedTextureInfo(string p, Texture tex, int t)

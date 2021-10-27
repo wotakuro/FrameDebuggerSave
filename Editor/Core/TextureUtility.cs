@@ -177,7 +177,7 @@ namespace UTJ.FrameDebugSave
                 }
             }
 #else
-            tex = new Texture2D(info.width, info.height, info.rawFormat, info.mipCount, false);
+            tex = new Texture2D(info.width, info.height, (TextureFormat)info.textureFormat, info.mipCount, false);
 #endif
 
             if(tex == null)
