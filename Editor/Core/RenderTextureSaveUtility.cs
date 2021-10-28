@@ -117,6 +117,8 @@ namespace UTJ.FrameDebugSave
             if (!isSupportSetPixel) { return true; }
             bool isSupportReadPixel = SystemInfo.IsFormatSupported(format, FormatUsage.ReadPixels);
             if (!isSupportReadPixel) { return true; }
+            bool isSupportSamplePixel = SystemInfo.IsFormatSupported(format, FormatUsage.Sample);
+            if (!isSupportSamplePixel) { return true; }
             return false;
         }
 
