@@ -16,6 +16,7 @@ namespace UTJ.FrameDebugSave
 
         public static FrameDebugDumpInfo.SavedTextureInfo SaveRenderTexture(RenderTexture src, string file)
         {
+
             
             FrameDebugDumpInfo.SavedTextureInfo saveInfo = null;
             byte[] saveData = null;
@@ -35,7 +36,8 @@ namespace UTJ.FrameDebugSave
             var data = req.GetData<byte>();
 
             if (Prefer32Bit(capture.graphicsFormat) || 
-                Prefer16Bit(capture.graphicsFormat))
+                Prefer16Bit(capture.graphicsFormat) ||
+                PreferRawData(capture.graphicsFormat) )
             {
                 /* can save exr but can't load exr.... */
                 saveData = data.ToArray();
@@ -164,6 +166,11 @@ namespace UTJ.FrameDebugSave
                 default:
                     return false;
             }
+        }
+
+        private static bool PreferRawData(GraphicsFormat format)
+        {
+            return true;
         }
 
         private static bool Prefer32Bit(GraphicsFormat format)
