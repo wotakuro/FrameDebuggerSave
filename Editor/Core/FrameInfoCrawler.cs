@@ -98,8 +98,9 @@ namespace UTJ.FrameDebugSave
             public object stencilState;
             public int stencilRef;
 
-            // non Serialized 
-            public FrameDebugDumpInfo.SavedTextureInfo savedScreenShotInfo;
+
+            // not copy from reflection
+            public List<FrameDebugDumpInfo.SavedTextureInfo> savedScreenShotInfo;
             public string batchBreakCauseStr;
             public ShaderProperties convertedProperties;
         }
@@ -286,7 +287,7 @@ namespace UTJ.FrameDebugSave
                     // save shader texture
                     ExecuteShaderTextureSave(frameInfo);
                     // capture screen shot
-                    ExecuteSaveScreenShot(frameInfo,(i==count) );
+                    ExecuteSaveScreenShot(frameInfo,0,(i==count) );
                 }
             }
             yield return null;
@@ -472,7 +473,17 @@ namespace UTJ.FrameDebugSave
 #endif
         }
 
-        private void ExecuteSaveScreenShot(FrameDebuggerEventData frameInfo,bool isFinalFrameEvent)
+        private void SetRenderTargetDisplayOptions(int rtIdx)
+        {
+            var method = frameDebuggeUtil.GetStaticMethodInfo("SetRenderTargetDisplayOptions");
+            if( method == null) {
+                Debug.LogError("Not Found SetRenderTargetDisplayOptions method");
+                return;
+            }
+            method.Invoke(null, new object[] { rtIdx, Vector4.one, 0, 1 });
+        }
+
+        private void ExecuteSaveScreenShot(FrameDebuggerEventData frameInfo,int rtIdx,bool isFinalFrameEvent)
         {
             if( !(this.captureFlag.HasFlag(CaptureFlag.FinalTexture)) && 
                 !(this.captureFlag.HasFlag(CaptureFlag.ScreenShotBySteps))) {
@@ -511,7 +522,13 @@ namespace UTJ.FrameDebugSave
                 {
                     path = System.IO.Path.Combine(dir, "ss-" + frameInfo.frameEventIndex );
                 }
-                frameInfo.savedScreenShotInfo = TextureUtility.SaveRenderTexture(renderTexture, path);                
+                var screenshotInfo = TextureUtility.SaveRenderTexture(renderTexture, path);
+
+                if(frameInfo.savedScreenShotInfo == null)
+                {
+                    frameInfo.savedScreenShotInfo = new List<FrameDebugDumpInfo.SavedTextureInfo>(frameInfo.rtCount);
+                }
+                frameInfo.savedScreenShotInfo.Add(screenshotInfo);
             }
         }
         

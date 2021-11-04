@@ -144,7 +144,12 @@ namespace UTJ.FrameDebugSave
             {
                 jsonStringGenerator.AddObjectValue("frameEventIndex",evtData.frameEventIndex);
                 jsonStringGenerator.AddObjectValue("type",evt.type.ToString());
-                AppendSavedTextureInfo(jsonStringGenerator, "screenshot",evtData.savedScreenShotInfo);
+                using (var objArray = new JsonStringGenerator.ObjectArrayValueScope(jsonStringGenerator, "screenshots")) {
+                    foreach (var screenshotInfo in evtData.savedScreenShotInfo)
+                    {
+                        AppendSavedTextureInfoWithoutName(jsonStringGenerator, screenshotInfo);
+                    }
+                }
                 AppendRenderingInfo(jsonStringGenerator, evt, evtData);
                 AppendRenderTargetInfo(jsonStringGenerator, evtData);
                 AppendShaderInfo(jsonStringGenerator, evtData);
@@ -254,23 +259,36 @@ namespace UTJ.FrameDebugSave
                 }
             }
         }
-        private void AppendSavedTextureInfo(JsonStringGenerator jsonStringGenerator,string objName , FrameDebugDumpInfo.SavedTextureInfo saveInfo)
+        private void AppendSavedTextureInfo(JsonStringGenerator jsonStringGenerator, string objName, FrameDebugDumpInfo.SavedTextureInfo saveInfo)
         {
-            if( saveInfo == null) { return; }
+            if (saveInfo == null) { return; }
             using (new JsonStringGenerator.ObjectScopeWithName(jsonStringGenerator, objName))
             {
-                jsonStringGenerator.AddObjectValue("path", saveInfo.path);
-                jsonStringGenerator.AddObjectValue("type", saveInfo.type);
-                jsonStringGenerator.AddObjectValue("width", saveInfo.width);
-                jsonStringGenerator.AddObjectValue("height", saveInfo.height);
-                jsonStringGenerator.AddObjectValue("mipCount", saveInfo.mipCount);
-                jsonStringGenerator.AddObjectValue("textureFormat", saveInfo.textureFormat);
+                AppendSavedTextureInfoBody(jsonStringGenerator, saveInfo);
+            }
+        }
+        private void AppendSavedTextureInfoWithoutName(JsonStringGenerator jsonStringGenerator, FrameDebugDumpInfo.SavedTextureInfo saveInfo)
+        {
+            if (saveInfo == null) { return; }
+            using (new JsonStringGenerator.ObjectScope(jsonStringGenerator))
+            {
+                AppendSavedTextureInfoBody(jsonStringGenerator, saveInfo);
+            }
+        }
+
+        private void AppendSavedTextureInfoBody(JsonStringGenerator jsonStringGenerator, FrameDebugDumpInfo.SavedTextureInfo saveInfo)
+        {
+            jsonStringGenerator.AddObjectValue("path", saveInfo.path);
+            jsonStringGenerator.AddObjectValue("type", saveInfo.type);
+            jsonStringGenerator.AddObjectValue("width", saveInfo.width);
+            jsonStringGenerator.AddObjectValue("height", saveInfo.height);
+            jsonStringGenerator.AddObjectValue("mipCount", saveInfo.mipCount);
+            jsonStringGenerator.AddObjectValue("textureFormat", saveInfo.textureFormat);
 
 #if UNITY_2020_2_OR_NEWER
-                jsonStringGenerator.AddObjectValue("originGraphicsFormat", saveInfo.originGraphicsFormat);
-                jsonStringGenerator.AddObjectValue("saveGraphicsFormat", saveInfo.saveGraphicsFormat);
+            jsonStringGenerator.AddObjectValue("originGraphicsFormat", saveInfo.originGraphicsFormat);
+            jsonStringGenerator.AddObjectValue("saveGraphicsFormat", saveInfo.saveGraphicsFormat);
 #endif
-            }
 
         }
 

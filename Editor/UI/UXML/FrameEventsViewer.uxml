@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Packages/com.utj.framedebuggersave/Editor/UI/UXML/FrameEventsViewer.uss?fileID=11400000&amp;guid=ce414a8c28e1f254db322a4b272a8e97&amp;type=3#FrameEventsViewer" />
     <ui:VisualElement style="flex-wrap: no-wrap; flex-direction: row;">
-        <Style src="FrameEventsViewer.uss" />
         <ui:VisualElement name="Captures" style="width: 240px; min-width: 240px;">
             <ui:Label text="Add to ShaderVaiantCollection" />
             <uie:ObjectField name="VariantCollectionObject" style="width: 180px; margin-left: 10px;" />
@@ -22,10 +22,7 @@
         </ui:VisualElement>
         <ui:VisualElement name="Detail" style="flex-shrink: 0; flex-grow: 1; min-width: 200px;">
             <ui:Label text="Screenshot" />
-            <ui:VisualElement style="flex-direction: row; flex-shrink: 0;">
-                <UTJ.FrameDebugSave.UI.ScalableImageView name="ScreenShot" style="padding-left: 10px; width: 100px; height: 100px;" />
-                <ui:Foldout text="RenderTargetInfo" name="RenderTargetInfo" />
-            </ui:VisualElement>
+            <ui:ScrollView name="ScreenshotScroll" style="min-height: 150px;" />
             <ui:VisualElement style="height: 3px; background-color: rgb(0, 0, 0);" />
             <ui:ScrollView name="DetailScroll" style="flex-shrink: 1;">
                 <ui:Foldout text="RenderingInfo" name="RenderingInfo" />

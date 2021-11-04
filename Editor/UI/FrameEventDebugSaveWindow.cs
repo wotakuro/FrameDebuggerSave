@@ -27,45 +27,12 @@ namespace UTJ.FrameDebugSave.UI
         private VisualTreeAsset namedValueParamTemplate;
         private TextureLoader textureLoader;
 
+        private VisualTreeAsset screenshotTemplate;
+
+
         private ShaderVariantCollection currentVariantCollection;
 
         private ShaderVariantCollectionCreator.EFlag variantFlag;
-
-#if !UNITY_2019_1_OR_NEWER && !UNITY_2019_OR_NEWER
-        private VisualElement rootVisualElement
-        {
-            get
-            {
-                return this.GetRootVisualContainer();
-            }
-        }
-
-        private float lastHeight = -1.0f;
-        private void SetupScrollViewHeight()
-        {
-            if (lastHeight == this.position.height)
-            {
-                return;
-            }
-
-            var captureItems = this.rootVisualElement.Q<ScrollView>("CaptureItems");
-            captureItems.style.height = this.position.height - 150;
-
-            var detailScroll = this.rootVisualElement.Q<ScrollView>("DetailScroll");
-            detailScroll.style.height = this.position.height - 20;
-
-            var eventListView = this.rootVisualElement.Q<FrameEventListView>();
-            if (eventListView != null)
-            {
-                eventListView.SetupScrollViewHeight(this.position.height);
-            }
-            lastHeight = this.position.height;
-        }
-        private void Update()
-        {
-            SetupScrollViewHeight();
-        }
-#endif
 
 
         [MenuItem("Tools/FrameDebugSave")]
@@ -75,16 +42,11 @@ namespace UTJ.FrameDebugSave.UI
         }
         private void OnEnable()
         {
-#if UNITY_2019_1_OR_NEWER || UNITY_2019_OR_NEWER
             string windowLayoutPath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML/FrameEventsViewer.uxml";
+            string screenShotPath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML/ScreenshotTemplate.uxml";
             string shaderParamPath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML/ShaderParameterTemplate.uxml";
             string namedValuePath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML/NamedValueTemplate.uxml";
-#else
-            lastHeight = -1.0f;
-            string windowLayoutPath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML2018/FrameEventsViewer.uxml";
-            string shaderParamPath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML2018/ShaderParameterTemplate.uxml";
-            string namedValuePath = "Packages/com.utj.framedebuggersave/Editor/UI/UXML2018/NamedValueTemplate.uxml";
-#endif
+
             this.variantFlag = (ShaderVariantCollectionCreator.EFlag)(-1);
             this.captureFlag = (FrameInfoCrawler.CaptureFlag)(-1);
 
@@ -93,9 +55,10 @@ namespace UTJ.FrameDebugSave.UI
             var visualElement = CloneTree(tree);
 
             this.rootVisualElement.Add(visualElement);
+            this.screenshotTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(screenShotPath);
+
             this.textureLoader = new TextureLoader();
             this.shaderParamTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(shaderParamPath);
-
             this.namedValueParamTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(namedValuePath);
 
 #if !UNITY_2019_1_OR_NEWER && !UNITY_2019_OR_NEWER
@@ -112,13 +75,53 @@ namespace UTJ.FrameDebugSave.UI
 
         private void OnFrameEventChange(FrameDebugDumpInfo.FrameEventInfo evtInfo)
         {
-            var screenShotTex = textureLoader.LoadTexture(evtInfo.screenshot);
+            /*
+            var screenShotTex = textureLoader.LoadTexture(evtInfo.screenshots[0]);
             this.rootVisualElement.Q<ScalableImageView>("ScreenShot").SetTexture( screenShotTex );
+            */
 
-            ChangeRenderTargetInfo(evtInfo);
+            //ChangeRenderTargetInfo(evtInfo);
+            ChangeRTInfo(evtInfo);
             ChangeRenderInfo(evtInfo);
             ChangeShaderInfo(evtInfo);
             ChangeShaderParam(evtInfo);
+        }
+
+        private void ChangeRTInfo(FrameDebugDumpInfo.FrameEventInfo evtInfo)
+        {
+            var scrollElem = this.rootVisualElement.Q<ScrollView>("ScreenshotScroll");
+            scrollElem.Clear();
+            if (evtInfo.screenshot != null &&
+                evtInfo.screenshot.width != 0 && evtInfo.screenshot.height != 0)
+            {
+                scrollElem.Add( CreateScreenshotInfoView(evtInfo.screenshot) );
+                return;
+            }
+            if( evtInfo.screenshots != null){
+                foreach(var screenshot in evtInfo.screenshots)
+                {
+                    scrollElem.Add(CreateScreenshotInfoView(screenshot));
+                }
+            }
+        }
+
+
+        private VisualElement CreateScreenshotInfoView(FrameDebugDumpInfo.SavedTextureInfo savedTexInfo)
+        {
+            var screenShotTex = textureLoader.LoadTexture(savedTexInfo);
+            var element = this.screenshotTemplate.CloneTree();
+            var imageView = element.Q<ScalableImageView>("ScreenShot");
+
+            imageView.SetTexture(screenShotTex);
+
+            var parentElement = element.Q<Foldout>("RenderTargetInfo");
+            parentElement.Add(CreateNameValueElement("RT Name", "name"));
+            parentElement.Add(CreateNameValueElement("Size", savedTexInfo.width + " X " + savedTexInfo.height));
+            parentElement.Add(CreateNameValueElement("MipCount", savedTexInfo.mipCount.ToString()));
+#if UNITY_2020_2_OR_NEWER
+            parentElement.Add(CreateNameValueElement("Depth", savedTexInfo.originFormat.ToString()));
+#endif
+            return element;
         }
 
 
@@ -331,34 +334,6 @@ namespace UTJ.FrameDebugSave.UI
                 scrollView.Add(btn);
              }
         }
-#if !UNITY_2019_1_OR_NEWER && !UNITY_2019_OR_NEWER
-
-        private void InitIMGUIArea()
-        {
-            var shaderVariant = this.rootVisualElement.Q<VisualElement>("ShaderVariantIMGUI");
-            var newCapture = this.rootVisualElement.Q<VisualElement>("NewCaptureIMGUI");
-
-            shaderVariant.Add(new IMGUIContainer(OnGUIShaderVariant));
-            newCapture.Add(new IMGUIContainer(OnGUINewCapture));
-        }
-        private void OnGUINewCapture()
-        {
-            captureFlag = (FrameInfoCrawler.CaptureFlag)EditorGUILayout.EnumFlagsField(captureFlag);
-            if (GUILayout.Button("capture"))
-            {
-                frameDebugSave.Execute(this.captureFlag, this.RefreshCaptures);
-            }
-        }
-        private void OnGUIShaderVariant()
-        {
-            this.currentVariantCollection = EditorGUILayout.ObjectField(this.currentVariantCollection, typeof(ShaderVariantCollection), false) as ShaderVariantCollection;
-            this.variantFlag = (ShaderVariantCollectionCreator.EFlag )EditorGUILayout.EnumFlagsField(this.variantFlag);
-            if (GUILayout.Button("Add"))
-            {
-                ExecuteAddShaderVariantCollection();
-            }
-        }
-#else
 
         private void InitShaderVariantCollectionUI()
         {
@@ -398,7 +373,7 @@ namespace UTJ.FrameDebugSave.UI
                 });
             };
         }
-#endif
+
         private void ExecuteAddShaderVariantCollection()
         {
             if( this.currentVariantCollection == null)
@@ -439,12 +414,7 @@ namespace UTJ.FrameDebugSave.UI
 
         private static VisualElement CloneTree(VisualTreeAsset asset)
         {
-#if UNITY_2019_1_OR_NEWER || UNITY_2019_OR_NEWER
             return asset.CloneTree();
-#else
-            return asset.CloneTree(null);
-
-#endif
         }
     }
 

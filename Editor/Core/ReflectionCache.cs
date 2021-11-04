@@ -104,6 +104,11 @@ namespace UTJ.FrameDebugSave
             var method = this.type.GetMethod(m, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
             return method;
         }
+        public MethodInfo GetStaticMethodInfo(string m)
+        {
+            var method = this.type.GetMethod(m, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
+            return method;
+        }
 
         public PropertyInfo GetPropertyInfo( string p)
         {

@@ -24,6 +24,10 @@ namespace UTJ.FrameDebugSave
             [SerializeField]
             public string type;
             [SerializeField]
+            public SavedTextureInfo[] screenshots;
+
+            // old version
+            [SerializeField]
             public SavedTextureInfo screenshot;
 
             [SerializeField]

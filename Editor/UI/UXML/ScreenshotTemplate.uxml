@@ -1,0 +1,7 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Packages/com.utj.framedebuggersave/Editor/UI/UXML/FrameEventsViewer.uss?fileID=11400000&amp;guid=ce414a8c28e1f254db322a4b272a8e97&amp;type=3#FrameEventsViewer" />
+    <ui:VisualElement style="flex-direction: row; flex-shrink: 0;">
+        <UTJ.FrameDebugSave.UI.ScalableImageView name="ScreenShot" style="padding-left: 10px; width: 100px; height: 100px;" />
+        <ui:Foldout text="RenderTargetInfo" name="RenderTargetInfo" />
+    </ui:VisualElement>
+</ui:UXML>
