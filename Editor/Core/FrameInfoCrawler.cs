@@ -18,11 +18,12 @@ namespace UTJ.FrameDebugSave
         public enum CaptureFlag:int
         {
             None = 0,
-            FinalTexture = 1, // EditorOnly
-            ScreenShotBySteps = 2,// EditorOnly
-            CaptureFromOriginRT = 4,// EditorOnly
-            CaptureScreenDepth = 8,// EditorOnly
-            ShaderTexture = 16, //EditorOnly
+            MultiRenderTarget = 1,// EditorOnly
+            FinalTexture = 2, // EditorOnly
+            ScreenShotBySteps = 4,// EditorOnly
+            CaptureFromOriginRT = 8,// EditorOnly
+            CaptureScreenDepth = 16,// EditorOnly
+            ShaderTexture = 32, //EditorOnly
         }
 
         public class ShaderPropertyInfo
@@ -278,7 +279,6 @@ namespace UTJ.FrameDebugSave
                 frameData.CopyFieldsToObjectByVarName<FrameDebuggerEventData>(ref frameInfo);
                 frameInfo.batchBreakCauseStr = breakReasons[frameInfo.batchBreakCause];
                 this.CreateShaderPropInfos(frameInfo);
-                frameDebuggerEventDataList.Add(frameInfo);
 
                 bool isRemoteEnalbed = this.IsRemoteEnabled();
                 if (!isRemoteEnalbed)
@@ -287,10 +287,49 @@ namespace UTJ.FrameDebugSave
                     // save shader texture
                     ExecuteShaderTextureSave(frameInfo);
                     // capture screen shot
-                    ExecuteSaveScreenShot(frameInfo,0,(i==count) );
+                    ExecuteSaveScreenShot(frameInfo, frameInfo,0, (i==count) );
                 }
+                if(frameInfo.rtCount > 1 &&
+                    (captureFlag & CaptureFlag.MultiRenderTarget) == CaptureFlag.MultiRenderTarget)
+                {
+                    var execMRT = ExecuteMRT(frameInfo, targetFrameIdx);
+                    while (execMRT.MoveNext()) { yield return null; }
+                }
+
+                frameDebuggerEventDataList.Add(frameInfo);
             }
             yield return null;
+        }
+
+        private IEnumerator ExecuteMRT(FrameDebuggerEventData frameInfo,int targetFrameIdx)
+        {
+            for (int i = 1; i < frameInfo.rtCount; ++i)
+            {
+                yield return null;
+                SetRenderTargetDisplayOptions(i);
+                yield return null;
+                // getTargetFrameInfo
+                var eventDataCoroutine = this.TryGetFrameEvnetData(targetFrameIdx, 2.0);
+                while (eventDataCoroutine.MoveNext())
+                {
+                    yield return null;
+                }
+                var frameData = currentFrameEventData;
+                if (frameData == null)
+                {
+                    UnityEngine.Debug.LogWarning("failed capture " + targetFrameIdx);
+                    continue;
+                }
+
+                FrameDebuggerEventData newInfo = new FrameDebuggerEventData();
+                frameData.CopyFieldsToObjectByVarName<FrameDebuggerEventData>(ref newInfo);
+                if (!this.IsRemoteEnabled())
+                {
+                    SetRenderTextureLastChange(newInfo);
+                    ExecuteSaveScreenShot(newInfo, frameInfo, i, false);
+                }
+
+            }
         }
 
         private void SetRenderTextureLastChange(FrameDebuggerEventData frameInfo)
@@ -355,13 +394,13 @@ namespace UTJ.FrameDebugSave
 
         }
 
-        private IEnumerator TryGetFrameEvnetData(int frameIdx,double deltaTime = 2 )
+        private IEnumerator TryGetFrameEvnetData(int frameIdx,double timeout = 2 )
         {
 
             double startTime = EditorApplication.timeSinceStartup;
 
             int limit = frameDebuggeUtil.GetPropertyValue<int>("limit", null);
-            while ((EditorApplication.timeSinceStartup - startTime) < deltaTime)
+            while ((EditorApplication.timeSinceStartup - startTime) < timeout)
             {
                 bool res = GetFrameEventData(frameIdx,out this.currentFrameEventData);
                 if (res)
@@ -483,7 +522,7 @@ namespace UTJ.FrameDebugSave
             method.Invoke(null, new object[] { rtIdx, Vector4.one, 0, 1 });
         }
 
-        private void ExecuteSaveScreenShot(FrameDebuggerEventData frameInfo,int rtIdx,bool isFinalFrameEvent)
+        private void ExecuteSaveScreenShot(FrameDebuggerEventData srcFrameInfo, FrameDebuggerEventData destFrameInfo, int rtIdx,bool isFinalFrameEvent)
         {
             if( !(this.captureFlag.HasFlag(CaptureFlag.FinalTexture)) && 
                 !(this.captureFlag.HasFlag(CaptureFlag.ScreenShotBySteps))) {
@@ -498,7 +537,7 @@ namespace UTJ.FrameDebugSave
 
             if (isGetFromTargetRT)
             {
-                renderTexture = TextureUtility.GetTargetRenderTexture(frameInfo);
+                renderTexture = TextureUtility.GetTargetRenderTexture(srcFrameInfo);
             }
             if(renderTexture == null)
             {
@@ -520,15 +559,15 @@ namespace UTJ.FrameDebugSave
                 }
                 else
                 {
-                    path = System.IO.Path.Combine(dir, "ss-" + frameInfo.frameEventIndex );
+                    path = System.IO.Path.Combine(dir, "ss-" + srcFrameInfo.frameEventIndex +"-rt"+rtIdx);
                 }
                 var screenshotInfo = TextureUtility.SaveRenderTexture(renderTexture, path);
 
-                if(frameInfo.savedScreenShotInfo == null)
+                if(destFrameInfo.savedScreenShotInfo == null)
                 {
-                    frameInfo.savedScreenShotInfo = new List<FrameDebugDumpInfo.SavedTextureInfo>(frameInfo.rtCount);
+                    destFrameInfo.savedScreenShotInfo = new List<FrameDebugDumpInfo.SavedTextureInfo>(srcFrameInfo.rtCount);
                 }
-                frameInfo.savedScreenShotInfo.Add(screenshotInfo);
+                destFrameInfo.savedScreenShotInfo.Add(screenshotInfo);
             }
         }
         

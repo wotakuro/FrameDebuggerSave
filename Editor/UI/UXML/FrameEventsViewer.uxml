@@ -22,7 +22,7 @@
         </ui:VisualElement>
         <ui:VisualElement name="Detail" style="flex-shrink: 0; flex-grow: 1; min-width: 200px;">
             <ui:Label text="Screenshot" />
-            <ui:ScrollView name="ScreenshotScroll" style="min-height: 150px;" />
+            <ui:ScrollView name="ScreenshotScroll" mode="Vertical" vertical-scroller-visibility="AlwaysVisible" style="min-height: 150px;" />
             <ui:VisualElement style="height: 3px; background-color: rgb(0, 0, 0);" />
             <ui:ScrollView name="DetailScroll" style="flex-shrink: 1;">
                 <ui:Foldout text="RenderingInfo" name="RenderingInfo" />
