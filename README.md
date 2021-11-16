@@ -1,7 +1,7 @@
 # FrameDebuggerSave
 
 ## About
-This tool arrows you to capture the information of "FrameDebugger" and view the information.
+This tool allows you to capture the information of "FrameDebugger" and view the information.
 Also this tool supports to generate ShaderVariantCollection assets from captured data.
 
 ![alt text](Documantation~/img/FrameDebuggerSave.png)
