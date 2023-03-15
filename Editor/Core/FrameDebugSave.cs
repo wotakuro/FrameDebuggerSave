@@ -29,8 +29,17 @@ namespace UTJ.FrameDebugSave
 
             // show FrameDebuggerWindow
             var frameDebuggerWindow = reflectionCache.GetTypeObject("UnityEditor.FrameDebuggerWindow");
-            object windowObj = frameDebuggerWindow.CallMethod<object>("ShowFrameDebuggerWindow", null, null);
-            frameDebuggerWindow.CallMethod<object>("EnableIfNeeded", windowObj, null);
+
+#if UNITY_2022_2_OR_NEWER
+            string openWindowMethod = "OpenWindow";
+            string enableMethod = "EnableFrameDebugger";
+#else
+            string openWindowMethod = "ShowFrameDebuggerWindow";
+            string enableMethod = "EnableIfNeeded";
+#endif
+
+            object windowObj = frameDebuggerWindow.CallMethod<object>(openWindowMethod, null, null);
+            frameDebuggerWindow.CallMethod<object>(enableMethod, windowObj, null);
             if (crawler == null)
             {
                 crawler = new FrameInfoCrawler(this.reflectionCache);
@@ -74,10 +83,8 @@ namespace UTJ.FrameDebugSave
                 AppendColumn("componentInstanceID").
                 AppendColumn("meshInstanceID").
                 AppendColumn("meshSubset");
-
             csvStringGenerator.AppendColumn("batchBreakCause");
             csvStringGenerator.NextRow();
-
 
             for (int i = 0; i < crawler.frameDebuggerEventDataList.Count; ++i)
             {
@@ -167,7 +174,18 @@ namespace UTJ.FrameDebugSave
                 if(evt.gameObject)
                 {
                     stringBuilder.Length = 0;
+#if UNITY_2022_2_OR_NEWER
+                    var gameObject = evt.m_Obj as GameObject;
+                    if(gameObject != null)
+                    {
+                        GetGameObjectName(gameObject, stringBuilder);
+                    }else if(evt.m_Obj != null)
+                    {
+                        stringBuilder.Append(evt.m_Obj.name);
+                    }
+#else
                     GetGameObjectName(evt.gameObject, stringBuilder);
+#endif
                     jsonStringGenerator.AddObjectValue("gameobject", stringBuilder.ToString() );
                 }
             }

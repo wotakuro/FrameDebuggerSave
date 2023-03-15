@@ -115,6 +115,7 @@ namespace UTJ.FrameDebugSave
         }
         public JsonStringGenerator AddObjectValue(string name, string val)
         {
+            if(val == null) { val = ""; }
             ExecuteObjectNum();
             NextLine();
             ExecuteWhiteSpace();

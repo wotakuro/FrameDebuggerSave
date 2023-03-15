@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEditorInternal;
+using System.Text;
 
 namespace UTJ.FrameDebugSave
 {
@@ -23,10 +24,22 @@ namespace UTJ.FrameDebugSave
 
         public class ShaderPropertyInfo
         {
+#if UNITY_2022_1_OR_NEWER
+            public string m_Name;
+            public int m_Flags;
+            public string m_TextureName;
+            public object m_Value;
+
+            public string name { get { return m_Name; } }
+            public int flag { get { return m_Flags; } }
+            public string textureName { get { return m_TextureName; } }
+            public object value { get { return m_Value; } }
+#else
             public string name;
             public int flags;
             public string textureName;
             public object value;
+#endif
 
             public TextureUtility.SaveTextureInfo saveTextureInfo;
         }
@@ -34,22 +47,152 @@ namespace UTJ.FrameDebugSave
 
         public class ShaderProperties
         {
+#if UNITY_2022_2_OR_NEWER
+            public System.Array m_Keywords;
+            public System.Array m_Floats;
+            public System.Array m_Vectors;
+            public System.Array m_Matrices;
+            public System.Array m_Textures;
+            public System.Array m_Buffers;
+            public System.Array m_CBuffers;
+
+#else
             public System.Array floats;
             public System.Array vectors;
             public System.Array matrices;
             public System.Array textures;
             public System.Array buffers;
+#endif
 
             // NonSerialized
+            public List<ShaderPropertyInfo> convertedKeywords;
             public List<ShaderPropertyInfo> convertedFloats;
             public List<ShaderPropertyInfo> convertedVectors;
             public List<ShaderPropertyInfo> convertedMatricies;
             public List<ShaderPropertyInfo> convertedTextures;
             public List<ShaderPropertyInfo> convertedBuffers;
+            public List<ShaderPropertyInfo> convertedCBuffers;
         }
 
         public class FrameDebuggerEventData
         {
+#if UNITY_2022_2_OR_NEWER
+            // inform
+            public int m_FrameEventIndex;
+            public int m_VertexCount;
+            public int m_IndexCount;
+            public int m_InstanceCount;
+            public int m_DrawCallCount;
+            public string m_OriginalShaderName;
+            public string m_RealShaderName;
+            public string m_PassName;
+            public string m_PassLightMode;
+            public int m_ShaderInstanceID;
+            public int m_SubShaderIndex;
+            public int m_ShaderPassIndex;
+
+            public string shaderKeywords
+            {
+                get
+                {
+                    if (this.convertedProperties == null || this.convertedProperties.convertedKeywords == null)
+                    {
+                        return "";
+                    }
+                    StringBuilder sb = new StringBuilder();
+                    foreach(var keywordInfo in convertedProperties.convertedKeywords)
+                    {
+                        sb.Append(keywordInfo.name).Append(" ");
+                    }
+                    return sb.ToString();
+                }
+            }
+
+
+            public int m_ComponentInstanceID;
+            public int m_MeshInstanceID;
+            public int m_MeshSubset;
+
+            // getter
+
+            public int frameEventIndex { get { return m_FrameEventIndex; } }
+            public int vertexCount { get { return m_VertexCount; } }
+            public int indexCount { get { return m_IndexCount; } }
+            public int instanceCount { get { return m_InstanceCount; } }
+            public int drawCallCount { get { return m_DrawCallCount; } }
+            public string shaderName { get { return m_RealShaderName; } }
+            public string passName { get { return m_PassName; } }
+            public string passLightMode { get { return m_PassLightMode; } }
+            public int shaderInstanceID { get { return m_ShaderInstanceID; } }
+            public int subShaderIndex { get { return m_SubShaderIndex; } }
+            public int shaderPassIndex { get { return m_ShaderPassIndex; } }
+            public int componentInstanceID { get { return m_ComponentInstanceID; } }
+            public int meshInstanceID { get { return m_MeshInstanceID; } }
+            public int meshSubset { get { return m_MeshSubset; } }
+
+            // state for compute shader dispatches
+            public int m_CsInstanceID;
+            public string m_CsName;
+            public string m_CsKernel;
+            public int m_CsThreadGroupsX;
+            public int m_CsThreadGroupsY;
+            public int m_CsThreadGroupsZ;
+
+            // getter
+            public int csInstanceID { get { return m_CsInstanceID; } }
+            public string csName { get { return m_CsName; } }
+            public string csKernel { get { return m_CsKernel; } }
+            public int csThreadGroupsX { get { return m_CsThreadGroupsX; } }
+            public int csThreadGroupsY { get { return m_CsThreadGroupsY; } }
+            public int csThreadGroupsZ { get { return m_CsThreadGroupsZ; } }
+
+            // active render target info
+            public string m_RenderTargetName;
+            public int m_RenderTargetWidth;
+            public int m_RenderTargetHeight;
+            public int m_RenderTargetFormat;
+            public int m_RenderTargetDimension;
+            public int m_RtFace;
+            public short m_RenderTargetCount;
+            public short m_RenderTargetHasDepthTexture;
+            // getter
+            public string rtName { get { return m_RenderTargetName; } }
+            public int rtWidth { get { return m_RenderTargetWidth; } }
+            public int rtHeight { get { return m_RenderTargetHeight; } }
+            public int rtFormat { get { return m_RenderTargetFormat; } }
+            public int rtDim { get { return m_RenderTargetDimension; } }
+            public int rtFace { get { return m_RtFace; } }
+            public short rtCount { get { return m_RenderTargetCount; } }
+            public short rtHasDepthTexture { get { return m_RenderTargetHasDepthTexture;} }
+
+
+
+
+            public int m_BatchBreakCause;
+            public object m_ShaderInfo;
+
+            public object m_BlendState;
+            public object m_RasterState;
+            public object m_DepthState;
+            public object m_StencilState;
+            public int m_StencilRef;
+
+            //geter
+            public int batchBreakCause { get { return m_BatchBreakCause; } }
+            public object shaderProperties { get { return m_ShaderInfo; } }
+
+            public object blendState { get { return m_BlendState; } }
+            public object rasterState { get { return m_RasterState; } }
+            public object depthState { get { return m_DepthState; } }
+            public object stencilState { get { return m_StencilState; } }
+            public int stencilRef { get { return m_StencilRef; } }
+
+            // non Serialized 
+            public TextureUtility.SaveTextureInfo savedScreenShotInfo;
+            public string batchBreakCauseStr;
+            public ShaderProperties convertedProperties;
+
+#else
             // inform
             public int frameEventIndex;
             public int vertexCount;
@@ -98,12 +241,21 @@ namespace UTJ.FrameDebugSave
             public TextureUtility.SaveTextureInfo savedScreenShotInfo;
             public string batchBreakCauseStr;
             public ShaderProperties convertedProperties;
+#endif
         }
 
         public class FrameDebuggerEvent
         {
+#if UNITY_2022_2_OR_NEWER
+            public object m_Type;
+            public Object m_Obj;
+
+            public object type { get { return m_Type; } }
+            public Object gameObject { get { return m_Obj; } }
+#else
             public object type;
             public GameObject gameObject;
+#endif
         }
 
         private class SavedRenderTextureInfo
@@ -169,14 +321,30 @@ namespace UTJ.FrameDebugSave
         public FrameInfoCrawler(ReflectionCache rcache)
         {
             this.reflectionCache = rcache;
-            this.frameDebuggeUtil = reflectionCache.GetTypeObject("UnityEditorInternal.FrameDebuggerUtility");
-            this.frameEventData = reflectionCache.GetTypeObject("UnityEditorInternal.FrameDebuggerEventData");
+
+#if UNITY_2022_2_OR_NEWER
+            string frameDebuggerUtilName = "UnityEditorInternal.FrameDebuggerInternal.FrameDebuggerUtility";
+            string frameEventDataName = "UnityEditorInternal.FrameDebuggerInternal.FrameDebuggerEventData";
+#else
+            string frameDebuggerUtilName = "UnityEditorInternal.FrameDebuggerUtility";
+            string frameEventDataName = "UnityEditorInternal.FrameDebuggerEventData";
+#endif
+
+            this.frameDebuggeUtil = reflectionCache.GetTypeObject(frameDebuggerUtilName);
+            this.frameEventData = reflectionCache.GetTypeObject(frameEventDataName);
 
 #if UNITY_2021_2_OR_NEWER
             this.frameDebugger = reflectionCache.GetTypeObject(typeof(UnityEngine.FrameDebugger));
 #endif
-        var frameDebuggerWindowType = this.reflectionCache.GetTypeObject("UnityEditor.FrameDebuggerWindow");
-            var window = frameDebuggerWindowType.CallMethod<object>("ShowFrameDebuggerWindow", null, null);
+
+#if UNITY_2022_2_OR_NEWER
+            string openWindowMethod = "OpenWindow";
+#else
+            string openWindowMethod = "ShowFrameDebuggerWindow";
+#endif
+
+            var frameDebuggerWindowType = this.reflectionCache.GetTypeObject("UnityEditor.FrameDebuggerWindow");
+            var window = frameDebuggerWindowType.CallMethod<object>(openWindowMethod, null, null);
             this.frameDebuggerWindowObj = new ReflectionClassWithObject(frameDebuggerWindowType, window);
 
             this.IsRunning = false;
@@ -252,7 +420,12 @@ namespace UTJ.FrameDebugSave
             for ( int i = 0; i <= count; ++i)
             {
                 yield return null;
+#if UNITY_2022_1_OR_NEWER
+                this.frameDebuggerWindowObj.CallMethod<object>("ChangeFrameEventLimit", new object[] { i },new System.Type[] { typeof(int)});
+
+#else
                 this.frameDebuggerWindowObj.CallMethod<object>("ChangeFrameEventLimit",new object[] { i });
+#endif
                 this.frameDebuggerWindowObj.CallMethod<object>("RepaintOnLimitChange",null);
                 int targetFrameIdx = i - 1;
                 if(targetFrameIdx < 0 || targetFrameIdx >= frameEvents.Length) { continue; }
@@ -288,6 +461,7 @@ namespace UTJ.FrameDebugSave
             yield return null;
         }
 
+
         private void SetRenderTextureLastChange(FrameDebuggerEventData frameInfo)
         {
             var rt = TextureUtility.GetTargetRenderTexture(frameInfo);
@@ -314,17 +488,26 @@ namespace UTJ.FrameDebugSave
             frameInfo.convertedProperties = new ShaderProperties();
             originPropReflection.CopyFieldsToObjectByVarName<ShaderProperties>(ref frameInfo.convertedProperties);
             var props = frameInfo.convertedProperties;
-
+#if UNITY_2022_2_OR_NEWER
+            props.convertedKeywords = ReflectionClassWithObject.CopyToListFromArray<ShaderPropertyInfo>(this.reflectionCache, props.m_Keywords);
+            props.convertedFloats = ReflectionClassWithObject.CopyToListFromArray<ShaderPropertyInfo>(this.reflectionCache, props.m_Floats);
+            props.convertedVectors = ReflectionClassWithObject.CopyToListFromArray<ShaderPropertyInfo>(this.reflectionCache, props.m_Vectors);
+            props.convertedMatricies = ReflectionClassWithObject.CopyToListFromArray<ShaderPropertyInfo>(this.reflectionCache, props.m_Matrices);
+            props.convertedTextures = ReflectionClassWithObject.CopyToListFromArray<ShaderPropertyInfo>(this.reflectionCache, props.m_Textures);
+            props.convertedBuffers = ReflectionClassWithObject.CopyToListFromArray<ShaderPropertyInfo>(this.reflectionCache, props.m_Buffers);
+            props.convertedCBuffers = ReflectionClassWithObject.CopyToListFromArray<ShaderPropertyInfo>(this.reflectionCache, props.m_CBuffers);
+#else
             props.convertedFloats = ReflectionClassWithObject.CopyToListFromArray<ShaderPropertyInfo>(this.reflectionCache,props.floats);
             props.convertedVectors = ReflectionClassWithObject.CopyToListFromArray<ShaderPropertyInfo>(this.reflectionCache, props.vectors);
             props.convertedMatricies = ReflectionClassWithObject.CopyToListFromArray<ShaderPropertyInfo>(this.reflectionCache,props.matrices);
             props.convertedTextures = ReflectionClassWithObject.CopyToListFromArray<ShaderPropertyInfo>(this.reflectionCache,props.textures);
             props.convertedBuffers = ReflectionClassWithObject.CopyToListFromArray<ShaderPropertyInfo>(this.reflectionCache,props.buffers);
-
+#endif
         }
 
         private IEnumerator WaitForRemoteConnect(double deltaTime)
         {
+
             bool isRemoteEnalbed = this.IsRemoteEnabled();
             bool isReceiving = frameDebuggeUtil.GetPropertyValue<bool>("receivingRemoteFrameEventData", null);
 
@@ -395,7 +578,6 @@ namespace UTJ.FrameDebugSave
         {
             this.frameDebuggerEventList = ReflectionClassWithObject.CopyToListFromArray<FrameDebuggerEvent>(this.reflectionCache,arr);
         }
-
 
         private void ExecuteShaderTextureSave(FrameDebuggerEventData frameInfo)
         {

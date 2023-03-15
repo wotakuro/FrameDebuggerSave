@@ -16,6 +16,11 @@ namespace UTJ.FrameDebugSave
         }
         public CsvStringGenerator AppendColumn(string val)
         {
+            if(val == null)
+            {
+                stringBuilder.Append(',');
+                return this;
+            }
             val = val.Replace(',', '.').Replace('\n', ' ');
             stringBuilder.Append(val).Append(',');
             return this;

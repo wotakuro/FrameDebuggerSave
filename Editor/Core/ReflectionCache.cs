@@ -95,6 +95,15 @@ namespace UTJ.FrameDebugSave
         public T CallMethod<T>(string m, object obj, object[] args)
         {
             var method = GetMethodInfo( m);
+            if (method == null) { Debug.LogError("method not found ::"+ typeof(T).Name+" . " + m); }
+            T val = (T)method.Invoke(obj, args);
+            return val;
+        }
+
+        public T CallMethod<T>(string m, object obj, object[] args,System.Type[] types)
+        {
+            var method = GetMethodInfo(m,types);
+            if (method == null) { Debug.LogError("method not found ::" + typeof(T).Name + " . " + m); }
             T val = (T)method.Invoke(obj, args);
             return val;
         }
@@ -104,6 +113,13 @@ namespace UTJ.FrameDebugSave
             var method = this.type.GetMethod(m, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
             return method;
         }
+        public MethodInfo GetMethodInfo(string m,System.Type[] types)
+        {
+            var method = this.type.GetMethod(m, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static,
+                null,types,null);
+            return method;
+        }
+
 
         public PropertyInfo GetPropertyInfo( string p)
         {
@@ -114,11 +130,13 @@ namespace UTJ.FrameDebugSave
         public void SetPropertyValue(string p, object target, object val)
         {
             var prop = GetPropertyInfo(p);
+            if (p == null) { Debug.LogError("property not found ::" + target.GetType().Name + " . " + p); }
             prop.SetValue(target, val);
         }
         public T GetPropertyValue<T>( string p, object target)
         {
             var prop = GetPropertyInfo( p);
+            if (p == null) { Debug.LogError("property not found ::" + target.GetType().Name + " . " + p); }
             return (T)prop.GetValue(target);
         }
 
@@ -200,6 +218,11 @@ namespace UTJ.FrameDebugSave
         public T CallMethod<T>(string m,  object[] args)
         {
             return this.type.CallMethod<T>(m,this.target,args);
+        }
+
+        public T CallMethod<T>(string m, object[] args,System.Type[] types)
+        {
+            return this.type.CallMethod<T>(m, this.target, args,types);
         }
 
         public void CopyFieldsToObjectByVarName<T>(ref T dest)
